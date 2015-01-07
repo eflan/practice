@@ -1,0 +1,8 @@
+Given a vector of integers, v[i] represents the stock price on day i.
+
+Now you may do at most K transactions.
+
+You must sell your stock before you buy it again and that means you
+can NOT have two stocks at the same time.
+
+Write a program to find max profit you can get.
