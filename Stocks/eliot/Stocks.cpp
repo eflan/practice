@@ -77,7 +77,17 @@ public:
     public:
         size_t operator()(const Key &k) const
         {
-            return k.K() ^ k.Start() ^ k.End();
+            //
+            // Simple polynomial hash algorithm described by
+            // Paul Larson of Microsoft Research.
+            // Pick a random number to start with and iteratively
+            // hash each value.
+            //
+
+            size_t hash = k.K() + 747984492;
+            hash += (hash * 101) + k.Start();
+            hash += (hash * 101) + k.End();
+            return hash;
         }
     };
 
@@ -365,7 +375,7 @@ TransactionList Stocks(Memoizer &memoizer,
             
             if(left.profit() + right.profit() > highest.profit())
             {
-				TransactionList joined(left, right);
+		TransactionList joined(left, right);
                 highest.takeOwn(joined);
             }
         }
@@ -376,6 +386,7 @@ TransactionList Stocks(Memoizer &memoizer,
 
 int main(int argc, char *argv[])
 {
+    /*
     unsigned int prices100[100] = { 
          48,  30,  88,  73, 100,  17,  24,  79,  49,  37,
          21,  14,  11,  62,  66,  56,  40,  81,  57,  71,
@@ -388,8 +399,8 @@ int main(int argc, char *argv[])
          15,  12,  27,  99,  35,  97,   1,  22,  90,  91,
          36,   6,  87,  25,  54,  28,  18,  94,  10,  74
     };
+    */
 
-    /*
     unsigned int prices365[365] = {
         748, 103, 517, 115, 836, 788, 436, 843, 871, 249,
         991, 131, 943, 139, 678,  98, 429, 895, 611, 993,
@@ -429,7 +440,6 @@ int main(int argc, char *argv[])
         200, 292, 283, 118, 158, 201,  92,  83, 963, 858,
         660, 429, 298, 357,  97
     };
-    */
 
     Memoizer memo;
 
@@ -440,11 +450,11 @@ int main(int argc, char *argv[])
      */
 
     TransactionList optimal = Stocks(memo,
-    /* max number of transactions */ (_countof(prices100) / 2) + 1,
-               /* array of prices */ prices100,
-                /* number of days */ _countof(prices100),
+    /* max number of transactions */ (_countof(prices365) / 2) + 1,
+               /* array of prices */ prices365,
+                /* number of days */ _countof(prices365),
                          /* start */ 0,
-                           /* end */ _countof(prices100) - 1);
+                           /* end */ _countof(prices365) - 1);
     
     optimal.print();
     printf("\nMemomizer hits %llu. misses %llu.\n", memo.Hits(), memo.Misses());
