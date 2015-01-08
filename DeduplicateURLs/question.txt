@@ -1,0 +1,13 @@
+Given a table of [Url, Content] pairs produce a new table of [Url, Set of duplicate Urls]. 
+
+Example Input: 
+a.com => <html>a</html> 
+b.com => <html>b</html> 
+c.com => <html>c</html> 
+d.com => <html>a</html> 
+e.com => <html>a</html> 
+
+Example Output: 
+a.com => [d.com, e.com] 
+b.com => [] 
+c.com => []
