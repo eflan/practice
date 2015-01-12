@@ -137,12 +137,12 @@ int main(int argc, char *argv[])
 	
 	/**
 	 * for(url in URLs)
-     * {
-     *     k = html[url]
-     *     list = duplicates[k]
-     *     duplicates[h] = cons(url, list)
-     * }
-     */
+	 * {
+	 *     k = html[url]
+	 *     list = duplicates[k]
+	 *     duplicates[h] = cons(url, list)
+	 * }
+	 */
     
 	for(size_t i = 0; i < COUNT_OF_URLs; i++)
 	{
