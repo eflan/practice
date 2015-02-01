@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <memory>
 
 /**
  * 1. Implement an algorithm to determine if a string has all unique characters. What if you cannot use any additional data structures?
@@ -245,6 +246,80 @@ void EncodeSpaces(char *str, size_t length)
 	}
 }
 
+// Iterates on str so long as there are repeated characters
+// Then compresses the characters by writing x? where x is a char
+// and ? is a decimal number with an aribitrary number of digits
+char *RunlengthEncode(char *str, char *compressed, size_t compressedSize, size_t *cchCompressed)
+{	
+	char *end = str + 1;
+	while(*end != '\0' && *end == *str)
+	{
+		end++;
+	}
+	
+	size_t num = end - str;
+	*cchCompressed = snprintf(compressed, compressedSize, "%c%zu", *str, num);
+	
+	if(*cchCompressed >= compressedSize)
+	{
+		return nullptr;
+	}
+	else
+	{
+		return end;
+	}
+}
+
+bool CompressStringHelper(char *str, char *compressed, size_t compressedSize)
+{
+	if(*str == '\0')
+	{
+		// if we reached the end of the string then we successfully
+		// compressed it because we would have bailed out before
+		// reaching the end if we compressed it and it was larger
+		// than the original string.
+		return true;
+	}
+	
+	size_t cch = 0;
+	char *end = RunlengthEncode(str, compressed, compressedSize, &cch);
+	if(end == nullptr)
+	{
+		return false;
+	}
+	else
+	{
+		return CompressStringHelper(end, compressed + cch, compressedSize - cch);
+	}
+}
+
+char *CompressString(char *str)
+{
+	size_t length = strlen(str);
+	if(length == 0)
+	{
+		// Can't compress an empty or null string
+		return str;
+	}
+	
+	// Allocate a buffer that holds a string one character smaller
+	// than str. This ensures that the compressed string is always
+	// smaller than str. Compression will fail if the compressed
+	// string would be larger or as large as str.
+	char *compressed = new char[length];
+	std::unique_ptr<char> spCompressed(compressed);
+	
+	if(CompressStringHelper(str, compressed, length + 1))
+	{
+		spCompressed.release();
+		return compressed;
+	}
+	else
+	{
+		return str;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	char str1[] = "abcabc";
@@ -342,6 +417,28 @@ int main(int argc, char *argv[])
 		{
 			printf("\"%s\"\n", error);
 		}
+	}
+	
+	char compressMe[] = "aabcccccaaa";
+	std::unique_ptr<char> spCompressed;
+	char *compressed = CompressString(compressMe);
+	if(compressed != compressMe)
+	{
+		spCompressed.reset(compressed);
+	}
+	
+	printf("\nCompressString(%s) = %s\n", compressMe, compressed);
+
+	char doNotCompress[] = "abc";
+	compressed = CompressString(doNotCompress);
+	if(compressed != doNotCompress)
+	{
+		spCompressed.reset(compressed);
+		printf("Erronious! \"abc\" should not be compressed\n");
+	}
+	else
+	{
+		printf("CompressString(%s) = %s\n", doNotCompress, compressed);
 	}
 	
 	return 0;
