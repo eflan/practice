@@ -379,6 +379,69 @@ void RotateImage90(Pixel *image, const size_t n)
 	delete[] rotated;
 }
 
+void ZeroMatrixRow(const size_t row, int *matrix, const size_t m, const size_t n)
+{
+	for(size_t i = 0; i < n; i++)
+	{
+		matrix[(row * n) + i] = 0;
+	}
+}
+
+void ZeroMatrixColumn(const size_t col, int *matrix, const size_t m, const size_t n)
+{
+	for(size_t i = 0; i < n; i++)
+	{
+		matrix[(i * n) + col] = 0;
+	}
+}
+
+void ZeroMatrix(int *matrix, const size_t m, const size_t n)
+{
+	bool *rowsToZero = new bool[m];
+	bool *colsToZero = new bool[n];
+	
+	for(size_t i = 0; i < m; i++)
+	{
+		rowsToZero[i] = false;
+	}
+
+	for(size_t i = 0; i < n; i++)
+	{
+		colsToZero[i] = false;
+	}
+	
+	for(size_t i = 0; i < m; i++)
+	{
+		for(size_t k = 0; k < n; k++)
+		{
+			if(matrix[(i * n) + k] == 0)
+			{
+				rowsToZero[i] = true;
+				colsToZero[k] = true;
+			}
+		}
+	}
+	
+	for(size_t i = 0; i < m; i++)
+	{
+		if(rowsToZero[i])
+		{
+			ZeroMatrixRow(i, matrix, m, n);
+		}
+	}
+
+	for(size_t i = 0; i < n; i++)
+	{
+		if(colsToZero[i])
+		{
+			ZeroMatrixColumn(i, matrix, m, n);
+		}
+	}
+	
+	delete[] rowsToZero;
+	delete[] colsToZero;
+}
+
 int main(int argc, char *argv[])
 {
 	char str1[] = "abcabc";
@@ -525,6 +588,34 @@ int main(int argc, char *argv[])
 		for(size_t k = 0; k < 4; k++)
 		{
 			image[(i * n) + k].Print();
+		}
+		printf("\n");
+	}
+	
+	int matrix[5 * 10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+		                   1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+		                   1, 2, 3, 4, 5, 6, 0, 8, 9, 10,
+		                   1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+		                   1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+	printf("Original matrix\n");
+	for(size_t i = 0; i < 5; i++)
+	{
+		for(size_t k = 0; k < 10; k++)
+		{
+			printf(" %2.2u ", matrix[(i * 10) + k]);
+		}
+		printf("\n");
+	}
+
+	ZeroMatrix(matrix, 5, 10);
+
+	printf("Zeroed matrix\n");
+	for(size_t i = 0; i < 5; i++)
+	{
+		for(size_t k = 0; k < 10; k++)
+		{
+			printf(" %2.2u ", matrix[(i * 10) + k]);
 		}
 		printf("\n");
 	}
