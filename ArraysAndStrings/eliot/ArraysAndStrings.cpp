@@ -320,6 +320,65 @@ char *CompressString(char *str)
 	}
 }
 
+class Pixel
+{
+public:
+	Pixel() : _r(0), _g(0), _b(0), _alpha(0) {}
+
+	Pixel(unsigned char r, unsigned char g, unsigned char b, unsigned char alpha)
+		:_r(r), _g(g), _b(b), _alpha(alpha)
+	{
+	}
+	
+	void Print()
+	{
+		printf("(%2.2u, %2.2u, %2.2u, %2.2u)", _r, _g, _b, _alpha);
+	}
+	
+	Pixel &operator=(Pixel &rhs)
+	{
+		_r = rhs._r;
+		_g = rhs._g;
+		_b = rhs._b;
+		_alpha = rhs._alpha;
+		return *this;
+	}
+	
+private:
+	unsigned char _r;
+	unsigned char _g;
+	unsigned char _b;
+	unsigned char _alpha;
+};
+
+void RotateImage90(Pixel *image, const size_t n)
+{
+	// Example:
+	// AB = CA
+	// CD   DB
+	// 
+	// ABCD = MIEA
+	// EFGH   NJFB
+	// IJKL   OKGC
+	// MNOP   PLHD
+	
+	// Iterate over columns, the new column is row N - column index
+	
+	Pixel *rotated = new Pixel[n * n];
+	
+	for(size_t i = 0; i < n; i++)
+	{
+		for(size_t k = 0; k < n; k++)
+		{
+			rotated[(k * n) + i] = image[(((n - 1) - i) * n) + k];
+		}
+	}
+
+	memcpy(image, rotated, n * n * sizeof(Pixel));
+	
+	delete[] rotated;
+}
+
 int main(int argc, char *argv[])
 {
 	char str1[] = "abcabc";
@@ -439,6 +498,35 @@ int main(int argc, char *argv[])
 	else
 	{
 		printf("CompressString(%s) = %s\n", doNotCompress, compressed);
+	}
+
+	printf("\nImage\n");
+	unsigned char ch = 0;
+	const size_t n = 4;
+	Pixel image[n * n];
+	for(size_t i = 0; i < 4; i++)
+	{
+		for(size_t k = 0; k < 4; k++)
+		{
+			Pixel p(ch, ch, ch, ch);
+			image[(i * n) + k] = p;
+			ch++;
+			
+			image[(i * n) + k].Print();
+		}
+		printf("\n");
+	}
+
+	printf("\nAfter rotation is \n");
+	RotateImage90(image, 4);
+
+	for(size_t i = 0; i < 4; i++)
+	{
+		for(size_t k = 0; k < 4; k++)
+		{
+			image[(i * n) + k].Print();
+		}
+		printf("\n");
 	}
 	
 	return 0;
