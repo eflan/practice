@@ -442,6 +442,61 @@ void ZeroMatrix(int *matrix, const size_t m, const size_t n)
 	delete[] colsToZero;
 }
 
+bool IsSubString(char const*substring, char const*strToSearch)
+{
+	if(substring == NULL || strToSearch == NULL)
+	{
+		return false;
+	}
+	else if(substring == strToSearch)
+	{
+		return true;
+	}
+	
+	char const *sub = substring;
+	
+	while(*strToSearch != '\0' && *sub != '\0')
+	{
+		if(*sub == *strToSearch)
+		{
+			// move on to next character in substring
+			sub++;
+		}
+		else
+		{
+			// start over
+			sub = substring;
+		}
+		
+		strToSearch++;
+	}
+	
+	return *sub == '\0';
+}
+
+// Returns true if s1 is a rotation of s2
+bool IsRotation(char const *s1, char const *s2)
+{
+	// double s2 and then see if s1 is a substring of the doubling
+	size_t s2Size = strlen(s2);
+	
+	const size_t s2DoubledSize = (s2Size * 2) + 1;
+	if(s2DoubledSize < s2Size)
+	{
+		// integer overflow
+		throw "Integer overflow!";
+	}
+	
+	char *s2Doubled = new char[s2DoubledSize];
+	memcpy(s2Doubled, s2, s2Size * sizeof(char));
+	memcpy(s2Doubled + s2Size, s2, s2Size);
+	s2Doubled[s2DoubledSize - 1] = '\0';
+	
+	bool isRotation = IsSubString(s1, s2Doubled);
+	delete[] s2Doubled;
+	return isRotation;
+}
+
 int main(int argc, char *argv[])
 {
 	char str1[] = "abcabc";
@@ -619,6 +674,18 @@ int main(int argc, char *argv[])
 		}
 		printf("\n");
 	}
+	
+	printf("\nIsSubstring(\"%s\", \"%s\") = %u\n", "water", "waterbottle", IsSubString("water", "waterbottle"));
+	printf("IsSubstring(\"%s\", \"%s\") = %u\n", "erbott", "waterbottle", IsSubString("erbott", "waterbottle"));
+	printf("IsSubstring(\"%s\", \"%s\") = %u\n", "erbottle", "waterbottle", IsSubString("erbottle", "waterbottle"));
+	printf("IsSubstring(\"%s\", \"%s\") = %u\n", "waterbottl", "waterbottle", IsSubString("waterbottl", "waterbottle"));
+	printf("IsSubstring(\"%s\", \"%s\") = %u\n", "waterbottle", "waterbottle", IsSubString("waterbottle", "waterbottle"));
+	printf("IsSubstring(\"%s\", \"%s\") = %u\n", "waterbottlee", "waterbottle", IsSubString("waterbottlee", "waterbottle"));
+	printf("IsSubstring(\"%s\", \"%s\") = %u\n", "are", "waterbottle", IsSubString("are", "waterbottle"));
+	
+	printf("\nIsRotation(\"%s\", \"%s\") = %u\n", "waterbottle", "erbottlewat", IsRotation("waterbottle", "erbottlewat"));
+	printf("IsRotation(\"%s\", \"%s\") = %u\n", "waterbottle", "erbottlewat", IsRotation("waterbottle", "erbottlewate"));
+	printf("IsRotation(\"%s\", \"%s\") = %u\n", "waterbottle", "erbottlewat", IsRotation("waterbottle", "erbottelwat"));
 	
 	return 0;
 }
