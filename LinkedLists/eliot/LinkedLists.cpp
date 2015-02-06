@@ -349,10 +349,10 @@ int main(int argc, char *argv[])
 	PrintList(partitioned);
 	printf("\n");
 	
+	printf("\nLeast significant digit first --\n");
 	Node *sevenOneSix = new Node(7, new Node(1, new Node(6, nullptr)));
 	Node *fiveNineTwo = new Node(5, new Node(9, new Node(2, nullptr)));
 	Node *sum = AddNumbersAsLists_LeastSignificantFirst(sevenOneSix, fiveNineTwo);
-	printf("\n");
 	PrintList(sevenOneSix);
 	printf(" + ");
 	PrintList(fiveNineTwo);
@@ -360,12 +360,31 @@ int main(int argc, char *argv[])
 	PrintList(sum);
 	printf("\n");
 	
+	Node *fiveNineFive = new Node(5, new Node(9, new Node(5, nullptr)));
+	sum = AddNumbersAsLists_LeastSignificantFirst(sevenOneSix, fiveNineFive);
+	PrintList(sevenOneSix);
+	printf(" + ");
+	PrintList(fiveNineFive);
+	printf(" = ");
+	PrintList(sum);
+	printf("\n");
+	
+	printf("\nMost significant digit first --\n");
 	Node *sixOneSeven = new Node(6, new Node(1, new Node(7, nullptr)));
 	Node *twoNineFive = new Node(2, new Node(9, new Node(5, nullptr)));
 	sum = AddNumbersAsLists_MostSignificantFirst(sixOneSeven, twoNineFive);
 	PrintList(sixOneSeven);
 	printf(" + ");
 	PrintList(twoNineFive);
+	printf(" = ");
+	PrintList(sum);
+	printf("\n");
+	
+	Node *fourNineFive = new Node(4, new Node(9, new Node(5, nullptr)));
+	sum = AddNumbersAsLists_MostSignificantFirst(sixOneSeven, fourNineFive);
+	PrintList(sixOneSeven);
+	printf(" + ");
+	PrintList(fourNineFive);
 	printf(" = ");
 	PrintList(sum);
 	printf("\n");
