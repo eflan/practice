@@ -149,6 +149,46 @@ void DeleteMiddleNode(Node *middle)
 	delete next;
 }
 
+Node *PartitionAboutX(unsigned int x, Node *list)
+{
+	// walk the list until we find a node >= x
+	Node *pivot = list;
+	
+	while(pivot != nullptr && pivot->value < x)
+	{
+		pivot = pivot->next;
+	}
+	
+	// if every node in the list < x then it is already partitioned
+	if(pivot != nullptr)
+	{
+		// then continue walking, placing nodes < x before this node
+		Node *cur = pivot->next;
+		Node *prev = pivot;
+				
+		while(cur != nullptr)
+		{
+			if(cur->value < x)
+			{
+				// move cur to head of the list
+				Node *unlinked = cur;
+				cur = cur->next;
+				prev->next = cur;
+				unlinked->next = list;
+				list = unlinked;
+			}
+			else
+			{
+				// keep on moving
+				prev = prev->next;
+				cur = cur->next;
+			}
+		}
+	}
+	
+	return list;
+}
+
 int main(int argc, char *argv[])
 {
 	Node *listOf5 = new Node(4, new Node(1, new Node(1, new Node(3, new Node(4, nullptr)))));
@@ -200,6 +240,34 @@ int main(int argc, char *argv[])
 	DeleteMiddleNode(listOf10->next->next->next->next);
 	printf(" results in the list ");
 	PrintList(listOf10);
+	printf("\n");
+
+    Node *listOf50 = new Node(44, new Node(56, new Node(79, new Node(94, new Node(83, new Node(78, new Node(1, new Node(92, new Node(39, new Node(91,
+                      new Node(86, new Node(10, new Node(11, new Node(22, new Node(12, new Node(36, new Node(32, new Node(61, new Node(5, new Node(34,
+                       new Node(28, new Node(46, new Node(71, new Node(13, new Node(25, new Node(30, new Node(73, new Node(88, new Node(20, new Node(95,
+                        new Node(74, new Node(60, new Node(35, new Node(50, new Node(18, new Node(67, new Node(70, new Node(29, new Node(41, new Node(84,
+                         new Node(66, new Node(47, new Node(72, new Node(57, new Node(26, new Node(81, new Node(21, new Node(48, new Node(98, new Node(100, nullptr))))))))))))))))))))))))))))))))))))))))))))))))));
+	
+
+	printf("\nList \n");
+	PrintList(listOf50);
+	printf("\nPartitioned around %u is\n", 42);
+	Node *partitioned = PartitionAboutX(42, listOf50);
+	PrintList(partitioned);
+	printf("\n");
+	
+	printf("\nList \n");
+	PrintList(partitioned);
+	printf("\nPartitioned around %u is\n", 90);
+	partitioned = PartitionAboutX(90, partitioned);
+	PrintList(partitioned);
+	printf("\n");
+	
+	printf("\nList \n");
+	PrintList(partitioned);
+	printf("\nPartitioned around %u is\n", 100);
+	partitioned = PartitionAboutX(100, partitioned);
+	PrintList(partitioned);
 	printf("\n");
 	
 	return 0;
