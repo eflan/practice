@@ -268,6 +268,48 @@ Node *AddNumbersAsLists_MostSignificantFirst(Node *num1, Node *num2)
 	}
 }
 
+Node *FindCycleHelper(Node *list, Node *canary)
+{
+	// If we reach the end of the list then there was no cycle.
+	if(list == nullptr)
+	{
+		return nullptr;
+	}
+	else
+	{
+		//
+		// If this node's next pointer is the canary value
+		// then we have found a circular reference.
+		//
+		
+		if(list->next == canary)
+		{
+			return list;
+		}
+		else
+		{
+			//
+			// Recursive step is to unlink the current node
+			// but cache its next pointer to fixup later.
+			// Then repeat the process with the next node.
+			// Finally, fixup to restore the list to its original state.
+			//
+			
+			Node *fixup = list->next;
+			list->next = canary;
+			Node *cycle = FindCycleHelper(fixup, canary);
+			list->next = fixup;
+			return cycle;
+		}
+	}
+}
+
+Node *FindCycle(Node *list)
+{
+	Node canary(0, nullptr);
+	return FindCycleHelper(list, &canary);
+}
+
 int main(int argc, char *argv[])
 {
 	Node *listOf5 = new Node(4, new Node(1, new Node(1, new Node(3, new Node(4, nullptr)))));
@@ -388,6 +430,56 @@ int main(int argc, char *argv[])
 	printf(" = ");
 	PrintList(sum);
 	printf("\n");
+	
+	// EXAMPLE Input: 0->1->2->3->4->2 (the same 2 as earlier). Output: 2.
+
+	Node *circularList = new Node(0, new Node(1, new Node(2, new Node(3, new Node(4, nullptr)))));
+	// make it circular
+	circularList->next->next->next->next->next = circularList->next->next;
+	Node *cycle = FindCycle(circularList);
+	printf("\nCircular list ");
+	
+	unsigned int cycleCount = 0;
+	for(Node *p = circularList; cycleCount != 2; p = p->next)
+	{
+		if(p == circularList)
+		{
+			printf("(");
+		}
+		
+		if(p == cycle)
+		{
+			cycleCount++;
+			if(cycleCount == 2)
+			{
+				printf(" %u)", cycle->value);
+			}
+			else
+			{
+				printf("%u -> ", p->value);	
+			}
+		}
+		else
+		{
+			printf("%u -> ", p->value);	
+		}
+	}
+	
+	printf(" cycle start is %u (Node = %p).\n", cycle->value, cycle);
+	
+	Node *notCircular = new Node(0, new Node(1, new Node(2, new Node(3, new Node(4, nullptr)))));
+	cycle = FindCycle(notCircular);
+	printf("List ");
+	PrintList(notCircular);
+	
+	if(cycle == nullptr)
+	{
+		printf(" is not circular.\n");
+	}
+	else
+	{
+		printf(" should not be found to be circular! [ERROR]\n");
+	}
 	
 	return 0;
 }
