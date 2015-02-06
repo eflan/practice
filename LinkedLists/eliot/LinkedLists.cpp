@@ -310,6 +310,67 @@ Node *FindCycle(Node *list)
 	return FindCycleHelper(list, &canary);
 }
 
+size_t Length(Node *list)
+{
+	size_t size = 0;
+	while(list != nullptr)
+	{
+		list = list->next;
+		size++;
+	}
+	
+	return size;
+}
+
+Node *ElementAt(Node *list, size_t index)
+{
+	for(size_t i = 0; i < index; i++)
+	{
+		if(list == nullptr)
+		{
+			return nullptr;
+		}
+		else
+		{
+			list = list->next;
+		}
+	}
+	
+	return list;
+}
+
+// 0 -> 1 -> 0 is a palindrome
+// 0 -> 1 -> 2 is not
+
+bool IsPalindrome(Node *list)
+{
+	// Count the number of elements in the list.
+	// Then walk a pointer from the start and match it against its counterpart.
+	
+	Node *head = list;
+	size_t listLength = Length(list);
+	
+	// Treat empty lists as non-palindromes. This is open to debate.
+	if(listLength == 0)
+	{
+		return false;
+	}
+	
+	size_t offset = listLength - 1;
+	for(size_t checkedCount = 0; checkedCount < listLength / 2; checkedCount++)
+	{
+		if(head->value != ElementAt(head, offset)->value)
+		{
+			return false;
+		}
+		
+		head = head->next;
+		offset -= 2;
+	}
+	
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	Node *listOf5 = new Node(4, new Node(1, new Node(1, new Node(3, new Node(4, nullptr)))));
@@ -480,6 +541,28 @@ int main(int argc, char *argv[])
 	{
 		printf(" should not be found to be circular! [ERROR]\n");
 	}
+	
+	Node *palindromeOdd = new Node(0, new Node(1, new Node(2, new Node(3, new Node(2, new Node(1, new Node(0, nullptr)))))));
+	printf("\n");
+	PrintList(palindromeOdd);
+	printf(" is a palindrome? %s.\n", IsPalindrome(palindromeOdd) ? ("Yes") : ("No"));
+
+	Node *palindromeEven = new Node(0, new Node(1, new Node(2, new Node(3, new Node(3, new Node(2, new Node(1, new Node(0, nullptr))))))));
+	PrintList(palindromeEven);
+	printf(" is a palindrome? %s.\n", IsPalindrome(palindromeEven) ? ("Yes") : ("No"));
+
+	Node *notPalindromeOdd = new Node(0, new Node(1, new Node(2, new Node(2, new Node(0, nullptr)))));
+	PrintList(notPalindromeOdd);
+	printf(" is a palindrome? %s.\n", IsPalindrome(notPalindromeOdd) ? ("Yes") : ("No"));
+	
+	Node *notPalindromeEven = new Node(0, new Node(1, new Node(2, new Node(3, new Node(1, new Node(0, nullptr))))));
+	PrintList(notPalindromeEven);
+	printf(" is a palindrome? %s.\n", IsPalindrome(notPalindromeEven) ? ("Yes") : ("No"));
+	
+	Node *degeneratePalindrome = new Node(0, nullptr);
+	PrintList(degeneratePalindrome);
+	printf(" is a palindrome? %s.\n", IsPalindrome(degeneratePalindrome) ? ("Yes") : ("No"));
+	printf("() is a palindrome? %s.\n", IsPalindrome(nullptr) ? ("Yes") : ("No"));
 	
 	return 0;
 }
