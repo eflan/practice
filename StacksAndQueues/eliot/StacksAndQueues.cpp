@@ -1,8 +1,8 @@
 #include <string.h>
 #include <list>
+#include <vector>
 #include <unordered_map>
 #include <memory>
-#include <new>
 
 class Stack
 {
@@ -144,6 +144,89 @@ bool TestStack(Stack *stack)
 	return true;
 }
 
+class MinStack : public Stack
+{
+public:
+	virtual unsigned int pop()
+	{
+		unsigned int top = _stack.front();
+		_stack.pop_front();
+		_minimums.pop_front();
+		return top;
+	}
+	
+	virtual void push(const unsigned int &value)
+	{
+		unsigned int lower = value;
+		if(!_minimums.empty() && lower > _minimums.front())
+		{
+			lower = _minimums.front();
+		}
+		
+		_stack.push_front(value);
+		_minimums.push_front(lower);
+	}
+	
+	virtual const unsigned int &peek() const
+	{
+		return _stack.front();
+	}
+	
+	virtual bool isEmpty() const
+	{
+		return _stack.empty();
+	}
+	
+	unsigned int min() const
+	{
+		return _minimums.front();
+	}
+	
+private:
+	std::list<unsigned int> _stack;
+	std::list<unsigned int> _minimums;
+};
+
+bool TestMinStack(MinStack *minStack)
+{
+	unsigned int values[25]   = {100, 99, 15, 77, 32, 38, 20, 18, 58, 30,
+                                  92, 10, 83, 13, 21, 70, 28, 96, 44, 52,
+                                  55, 79, 39, 94, 54 };
+
+	unsigned int minimums[25] = {100, 99, 15, 15, 15, 15, 15, 15, 15, 15,
+		                          15, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+		                          10, 10, 10, 10, 10};
+	
+	for(size_t i = 0; i < 25; i++)
+	{
+		minStack->push(values[i]);
+	
+		if(minStack->min() != minimums[i])
+		{
+			printf("After pushing element $%zu = %u stack reported minimum of %u but we expected %u!\n", i, values[i], minStack->min(), minimums[i]);
+			return false;
+		}
+	}
+	
+	for(size_t i = 0; i < 25; i++)
+	{
+		if(minStack->min() != minimums[24 - i])
+		{
+			printf("Before popping element #%zu minimum reported was %u but expected %u!\n", i, minStack->min(), minimums[24 - i]);
+			return false;
+		}
+
+		unsigned int popped = minStack->pop();
+		if(popped != values[24 - i])
+		{
+			printf("Popped element #%zu = %u but expected %u!\n", i, popped, values[24 - i]);
+			return false;
+		}		
+	}
+	
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	ThreeStacks threeStacks;
@@ -152,5 +235,8 @@ int main(int argc, char *argv[])
 	printf("Stack2 passed? %s.\n", TestStack(threeStacks.Stack2()) ? ("Yes") : ("No"));
 	printf("Stack3 passed? %s.\n", TestStack(threeStacks.Stack3()) ? ("Yes") : ("No"));
 
+	MinStack minStack;
+	printf("MinStack passed? %s.\n", TestMinStack(&minStack) ? ("Yes") : ("No"));
+	
 	return 0;
 }
