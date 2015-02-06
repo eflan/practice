@@ -189,6 +189,85 @@ Node *PartitionAboutX(unsigned int x, Node *list)
 	return list;
 }
 
+Node *Next(Node *n)
+{
+	if(n == nullptr)
+	{
+		return nullptr;
+	}
+	else
+	{
+		return n->next;
+	}
+}
+
+unsigned int Value(Node *n)
+{
+	if(n != nullptr)
+	{
+		return n->value;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+Node *AddNumbersAsLists_LeastSignificantFirstHelper(Node *num1, Node *num2, unsigned int carry)
+{
+	if(num1 == nullptr && num2 == nullptr)
+	{
+		if(carry != 0)
+		{
+			return new Node(carry, nullptr);
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+	else
+	{
+		unsigned int n = Value(num1) + Value(num2) + carry;
+		return new Node(n % 10, AddNumbersAsLists_LeastSignificantFirstHelper(Next(num1), Next(num2), n / 10));
+	}
+}
+
+Node *AddNumbersAsLists_LeastSignificantFirst(Node *num1, Node *num2)
+{
+	return AddNumbersAsLists_LeastSignificantFirstHelper(num1, num2, 0);
+}
+
+Node *AddNumbersAsLists_MostSignificantFirstHelper(Node *num1, Node *num2, unsigned int *carry)
+{
+	if(num1 == nullptr && num2 == nullptr)
+	{
+		return nullptr;
+	}
+	else
+	{
+		unsigned int localCarry = 0;
+		Node *rest = AddNumbersAsLists_MostSignificantFirstHelper(Next(num1), Next(num2), &localCarry);
+		unsigned int n = Value(num1) + Value(num2) + localCarry;
+		*carry = n / 10;
+		return new Node(n % 10, rest);
+	}
+}
+
+Node *AddNumbersAsLists_MostSignificantFirst(Node *num1, Node *num2)
+{
+	unsigned int carry = 0;
+	Node *rest = AddNumbersAsLists_MostSignificantFirstHelper(num1, num2, &carry);
+	if(carry != 0)
+	{
+		return new Node(carry, rest);
+	}
+	else
+	{
+		return rest;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	Node *listOf5 = new Node(4, new Node(1, new Node(1, new Node(3, new Node(4, nullptr)))));
@@ -268,6 +347,27 @@ int main(int argc, char *argv[])
 	printf("\nPartitioned around %u is\n", 100);
 	partitioned = PartitionAboutX(100, partitioned);
 	PrintList(partitioned);
+	printf("\n");
+	
+	Node *sevenOneSix = new Node(7, new Node(1, new Node(6, nullptr)));
+	Node *fiveNineTwo = new Node(5, new Node(9, new Node(2, nullptr)));
+	Node *sum = AddNumbersAsLists_LeastSignificantFirst(sevenOneSix, fiveNineTwo);
+	printf("\n");
+	PrintList(sevenOneSix);
+	printf(" + ");
+	PrintList(fiveNineTwo);
+	printf(" = ");
+	PrintList(sum);
+	printf("\n");
+	
+	Node *sixOneSeven = new Node(6, new Node(1, new Node(7, nullptr)));
+	Node *twoNineFive = new Node(2, new Node(9, new Node(5, nullptr)));
+	sum = AddNumbersAsLists_MostSignificantFirst(sixOneSeven, twoNineFive);
+	PrintList(sixOneSeven);
+	printf(" + ");
+	PrintList(twoNineFive);
+	printf(" = ");
+	PrintList(sum);
 	printf("\n");
 	
 	return 0;
