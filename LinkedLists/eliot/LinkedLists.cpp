@@ -141,6 +141,14 @@ void PrintList(Node *list)
 	}
 }
 
+void DeleteMiddleNode(Node *middle)
+{
+	middle->value = middle->next->value;
+	Node *next = middle->next;
+	middle->next = middle->next->next;
+	delete next;
+}
+
 int main(int argc, char *argv[])
 {
 	Node *listOf5 = new Node(4, new Node(1, new Node(1, new Node(3, new Node(4, nullptr)))));
@@ -184,6 +192,13 @@ int main(int argc, char *argv[])
 	printf("\n");
 	kth = KthToLast(1, listOf10);
 	printf("%u is the %u element from the end of the list ", kth->value, 1);
+	PrintList(listOf10);
+	printf("\n");
+	
+	printf("\nDeleting %u, middle node of ", listOf10->next->next->next->next->value);
+	PrintList(listOf10); 
+	DeleteMiddleNode(listOf10->next->next->next->next);
+	printf(" results in the list ");
 	PrintList(listOf10);
 	printf("\n");
 	
