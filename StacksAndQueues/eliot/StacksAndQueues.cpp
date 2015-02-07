@@ -189,6 +189,16 @@ public:
 	{
 		return _stack.size();
 	}
+
+	void print()
+	{
+		printf("[");
+		for(unsigned int n : _stack)
+		{
+			printf(" %u ", n);
+		}
+		printf("]");
+	}
 	
 private:
 	std::list<unsigned int> _stack;
@@ -316,12 +326,40 @@ public:
 		
 		return _stack->isEmpty();
 	}
-
+	
 private:
 	const size_t _cap;
 	MinStack *_stack;
 	std::list<MinStack *> _fullStacks;
 };
+
+void TowersOfHanoi(unsigned int count, MinStack *from, MinStack *to, MinStack *temp)
+{
+	if(from->isEmpty())
+	{		
+		return;
+	}
+	else if(count == 1)
+	{
+		if(from->peek() > to->peek())
+		{
+			throw "You crushed a disk!";
+		}
+		
+		to->push(from->pop());
+	}
+	else
+	{
+		// move count - 1 disks to temp
+		TowersOfHanoi(count - 1, from, temp, to);
+		
+		// then move one disk from from to to
+		TowersOfHanoi(1, from, to, temp);
+		
+		// then move N - 1 disks from temp to to
+		TowersOfHanoi(count - 1, temp, to, from);
+	}
+}
 
 int main(int argc, char *argv[])
 {
@@ -336,5 +374,21 @@ int main(int argc, char *argv[])
 	
 	SetOfStacks stackSet(10);
 	printf("\nSetOfStacks passed? %s.\n", TestStack(&stackSet) ? ("Yes") : ("No"));
+	
+	MinStack from;
+	MinStack to;
+	MinStack temp;
+	
+	for(unsigned int i = 0; i < 10; i++)
+	{
+		from.push(10 - i);
+	}
+	
+	TowersOfHanoi(10, &from, &to, &temp);
+
+	printf("\nTo peg: ");
+	to.print();
+	printf("\n");
+		
 	return 0;
 }
