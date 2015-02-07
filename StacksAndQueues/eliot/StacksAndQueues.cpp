@@ -361,6 +361,106 @@ void TowersOfHanoi(unsigned int count, MinStack *from, MinStack *to, MinStack *t
 	}
 }
 
+class Queue
+{
+public:
+	virtual ~Queue() {}
+	virtual unsigned int dequeue() = 0;
+	virtual void enqueue(const unsigned int &n) = 0;
+	virtual const unsigned int &peek() const = 0;
+	virtual bool isEmpty() const = 0;
+};
+
+class MyQueue : public Queue
+{
+public:
+	MyQueue()
+	{
+	}
+	
+	virtual ~MyQueue()
+	{
+	}
+	
+	virtual unsigned int dequeue()
+	{
+		readyQueue();
+		return _popStack.pop();
+	}
+	
+	virtual void enqueue(const unsigned int &value)
+	{
+		_pushStack.push(value);
+	}
+	
+	virtual const unsigned int &peek() const
+	{
+		readyQueue();
+		return _popStack.peek();
+	}
+	
+	virtual bool isEmpty() const
+	{
+		return _pushStack.isEmpty() && _popStack.isEmpty();
+	}
+	
+private:
+	void readyQueue() const
+	{
+		if(_popStack.isEmpty())
+		{
+			MinStack *pushStack = const_cast<MinStack *>(&_pushStack);
+			MinStack *popStack = const_cast<MinStack *>(&_popStack);
+			
+			while(!pushStack->isEmpty())
+			{
+				popStack->push(pushStack->pop());
+			}
+		}
+	}
+	
+	MinStack _pushStack;
+	MinStack _popStack;
+};
+
+bool TestQueue(Queue &q)
+{
+	if(!q.isEmpty())
+	{
+		printf("Queue is not empty at the start of the test!\n");
+		return false;
+	}
+	
+	for(unsigned int i = 0; i < 100; i++)
+	{
+		q.enqueue(i);
+	}
+
+	if(q.peek() != 0)
+	{
+		printf("Queue peek after inserting %u elements was %u not element %u!\n", 100, q.peek(), 0);
+		return false;
+	}
+	
+	for(unsigned int i = 0; i < 100; i++)
+	{
+		unsigned int value = q.dequeue();
+		if(value != i)
+		{
+			printf("Queue dequeue operation #%u = %u but expected %u!\n", i, value, i);
+			return false;
+		}
+	}
+	
+	if(!q.isEmpty())
+	{
+		printf("Queue is not empty at the end of the test!\n");
+		return false;
+	}
+	
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	ThreeStacks threeStacks;
@@ -389,6 +489,9 @@ int main(int argc, char *argv[])
 	printf("\nTo peg: ");
 	to.print();
 	printf("\n");
-		
+	
+	MyQueue q;
+	printf("MyQueue passed? %s.\n", TestQueue(q) ? ("Yes") : ("No"));
+	
 	return 0;
 }
