@@ -461,6 +461,36 @@ bool TestQueue(Queue &q)
 	return true;
 }
 
+void SortAscendingUsingOnlyAnotherStack(Stack *stack)
+{
+	MinStack temp;
+
+	// sort stack in descending order onto temp
+	while(!stack->isEmpty())
+	{
+		unsigned int n = stack->pop();
+		size_t count = 0;
+		while(n > temp.peek())
+		{
+			stack->push(temp.pop());
+			count++;
+		}
+		
+		temp.push(n);
+		
+		for(size_t i = 0; i < count; i++)
+		{
+			temp.push(stack->pop());
+		}
+	}
+	
+	// pop everything off of temp onto stack
+	while(!temp.isEmpty())
+	{
+		stack->push(temp.pop());
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	ThreeStacks threeStacks;
@@ -491,7 +521,23 @@ int main(int argc, char *argv[])
 	printf("\n");
 	
 	MyQueue q;
-	printf("MyQueue passed? %s.\n", TestQueue(q) ? ("Yes") : ("No"));
+	printf("\nMyQueue passed? %s.\n", TestQueue(q) ? ("Yes") : ("No"));
+	
+	MinStack unsorted;
+	unsigned int numbers[30] = { 9, 34, 19, 21, 45, 65, 93, 88, 52,  6,
+		                        38, 82, 36, 10, 28, 30, 20, 99, 62, 17,
+		                        22,  8, 69, 46, 89, 14, 51,100, 44, 87};
+	for(size_t i = 0; i < 30; i++)
+	{
+		unsorted.push(numbers[i]);
+	}
+	
+	printf("\n");
+	unsorted.print();
+	SortAscendingUsingOnlyAnotherStack(&unsorted);
+	printf("\nafter sorting is\n");
+	unsorted.print();
+	printf("\n");
 	
 	return 0;
 }
