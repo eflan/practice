@@ -7,6 +7,7 @@
 class Stack
 {
 public:
+	virtual ~Stack(){}
 	virtual unsigned int pop() = 0;
 	virtual void push(const unsigned int &value) = 0;
 	virtual const unsigned int &peek() const = 0;
@@ -147,6 +148,8 @@ bool TestStack(Stack *stack)
 class MinStack : public Stack
 {
 public:
+	virtual ~MinStack() {}
+
 	virtual unsigned int pop()
 	{
 		unsigned int top = _stack.front();
@@ -180,6 +183,11 @@ public:
 	unsigned int min() const
 	{
 		return _minimums.front();
+	}
+	
+	size_t count() const
+	{
+		return _stack.size();
 	}
 	
 private:
@@ -227,6 +235,94 @@ bool TestMinStack(MinStack *minStack)
 	return true;
 }
 
+class SetOfStacks : public Stack
+{
+public:
+	SetOfStacks(const size_t capacity) : _cap(capacity), _fullStacks()
+	{
+		_stack = new MinStack;
+	}
+	
+	~SetOfStacks()
+	{
+		while(!_fullStacks.empty())
+		{
+			MinStack *front = _fullStacks.front();
+			_fullStacks.pop_front();
+			delete front;
+		}
+		
+		delete _stack;
+	}
+	
+	virtual unsigned int pop()
+	{
+		if(!_stack->isEmpty())
+		{
+			return _stack->pop();
+		}
+		else if(!_fullStacks.empty())
+		{
+			MinStack *front = _fullStacks.front();
+			unsigned int value = front->pop();
+			if(front->isEmpty())
+			{
+				_fullStacks.pop_front();
+				delete front;
+			}
+			
+			return value;
+		}
+		else
+		{
+			throw "Cannot pop from an empty stack!.\n";
+		}
+	}
+	
+	virtual void push(const unsigned int &value)
+	{
+		_stack->push(value);
+		
+		if(_stack->count() == _cap)
+		{
+			_fullStacks.push_front(_stack);
+			_stack = new MinStack;
+		}		
+	}
+	
+	virtual const unsigned int &peek() const
+	{
+		if(!_stack->isEmpty())
+		{
+			return _stack->peek();
+		}
+		else if(!_fullStacks.empty())
+		{
+			return _fullStacks.front()->peek();
+		}
+
+		throw "Cannot peek at the top of an empty stack!.\n";
+	}
+	
+	virtual bool isEmpty() const
+	{
+		for(const MinStack *stack : _fullStacks)
+		{
+			if(!stack->isEmpty())
+			{
+				return false;
+			}
+		}
+		
+		return _stack->isEmpty();
+	}
+
+private:
+	const size_t _cap;
+	MinStack *_stack;
+	std::list<MinStack *> _fullStacks;
+};
+
 int main(int argc, char *argv[])
 {
 	ThreeStacks threeStacks;
@@ -236,7 +332,9 @@ int main(int argc, char *argv[])
 	printf("Stack3 passed? %s.\n", TestStack(threeStacks.Stack3()) ? ("Yes") : ("No"));
 
 	MinStack minStack;
-	printf("MinStack passed? %s.\n", TestMinStack(&minStack) ? ("Yes") : ("No"));
+	printf("\nMinStack passed? %s.\n", TestMinStack(&minStack) ? ("Yes") : ("No"));
 	
+	SetOfStacks stackSet(10);
+	printf("\nSetOfStacks passed? %s.\n", TestStack(&stackSet) ? ("Yes") : ("No"));
 	return 0;
 }
