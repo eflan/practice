@@ -491,6 +491,189 @@ void SortAscendingUsingOnlyAnotherStack(Stack *stack)
 	}
 }
 
+enum SpeciesType {Feline, Canine};
+
+class Animal
+{
+public:
+	Animal(const char *const myName) : _name(myName) {}
+	virtual ~Animal() {}
+	
+	virtual const SpeciesType species() const = 0;
+	
+	const char *const name() const { return _name; }
+	
+private:
+    const char *const _name;
+};
+
+class Cat : public Animal
+{
+public:
+	Cat(const char *const myName) : Animal(myName) {}
+	
+	virtual ~Cat() {}
+	virtual const SpeciesType species() const { return Feline; }
+};
+
+class Dog : public Animal
+{
+public:
+	Dog(const char *const myName) : Animal(myName) {}
+	
+	virtual ~Dog() {}
+	virtual const SpeciesType species() const { return Canine; }
+};
+
+class AnimalShelter
+{
+public:
+	void enqueue(Animal *animal)
+	{
+		_animals.push_back(animal);
+		if(animal->species() == Feline)
+		{
+			_cats.push_back(std::prev(_animals.end()));
+		}
+		else
+		{
+			_dogs.push_back(std::prev(_animals.end()));
+		}
+	}
+		
+	Animal *dequeueAny()
+	{
+		Animal *animal = _animals.front();
+		_animals.pop_front();
+		if(animal->species() == Feline)
+		{
+			_cats.pop_front();
+		}
+		else
+		{
+			_dogs.pop_front();
+		}
+			
+		return animal;
+	}
+	
+	Cat *dequeueCat()
+	{
+		auto it = _cats.front();
+		Cat *cat = static_cast<Cat *>(*it);
+		_cats.pop_front();
+		_animals.erase(it);
+		return cat;
+	}
+	
+	Dog *dequeueDog()
+	{
+		auto it = _dogs.front();
+		Dog *dog = static_cast<Dog *>(*it);
+		_dogs.pop_front();
+		_animals.erase(it);
+		return dog;
+	}
+
+private:	
+	std::list<Animal *> _animals;
+	std::list<std::list<Animal *>::iterator > _dogs;
+	std::list<std::list<Animal *>::iterator > _cats;
+};
+
+bool TestAnimalShelter(AnimalShelter &shelter)
+{
+		const char *const names[] = {"Sophie", "Ralph", "Felix", "Sylvester", "Rex", "Regina", "Pepper", "Max", "Fraggle", "Buddy"};	
+	
+	shelter.enqueue(new Cat(names[0]));
+	shelter.enqueue(new Dog(names[1]));
+	shelter.enqueue(new Cat(names[2]));
+	shelter.enqueue(new Cat(names[3]));
+	shelter.enqueue(new Dog(names[4]));
+	shelter.enqueue(new Dog(names[5]));
+	shelter.enqueue(new Cat(names[6]));
+	shelter.enqueue(new Dog(names[7]));
+	shelter.enqueue(new Cat(names[8]));
+	shelter.enqueue(new Dog(names[9]));
+	
+	// names is sorted by decreasing age so we just match up animals as they come out
+	
+	for(size_t i = 0; i < 3; i++)
+	{
+		Animal *animal = shelter.dequeueAny();
+		if(0 != strcmp(animal->name(), names[i]))
+		{
+			printf("Dequeued %s but expected %s!\n", animal->name(), names[i]);
+			return false;
+		}
+		delete animal;
+	}
+	
+	// Queue is now "Sylvester" (cat), "Rex" (dog), "Regina" (dog), "Pepper" (cat), "Max" (dog), "Fraggle" (cat), "Buddy" (dog)
+	Dog *dog = shelter.dequeueDog();
+	if(0 != strcmp(dog->name(), "Rex"))
+	{
+		printf("Dequeued %s instead of %s!\n", dog->name(), "Rex");
+		return false;
+	}
+	delete dog;
+	
+	// Queue is now "Sylvester" (cat), "Regina" (dog), "Pepper" (cat), "Max" (dog), "Fraggle" (cat), "Buddy" (dog)	
+	Cat *cat = shelter.dequeueCat();
+	if(0 != strcmp(cat->name(), "Sylvester"))
+	{
+		printf("Dequeued %s instead of %s!\n", cat->name(), "Sylvester");
+		return false;
+	}
+	delete cat;
+	
+	// Queue is now "Regina" (dog), "Pepper" (cat), "Max" (dog), "Fraggle" (cat), "Buddy" (dog)	
+	cat = shelter.dequeueCat();
+	if(0 != strcmp(cat->name(), "Pepper"))
+	{
+		printf("Dequeued %s instead of %s!\n", cat->name(), "Pepper");
+		return false;
+	}
+	delete cat;
+	
+	// Queue is now "Regina" (dog), "Max" (dog), "Fraggle" (cat), "Buddy" (dog)	
+	dog = shelter.dequeueDog();
+	if(0 != strcmp(dog->name(), "Regina"))
+	{
+		printf("Dequeued %s instead of %s!\n", cat->name(), "Pepper");
+		return false;
+	}
+	delete dog;
+	
+	// Queue is now "Max" (dog), "Fraggle" (cat), "Buddy" (dog)	
+	dog = shelter.dequeueDog();
+	if(0 != strcmp(dog->name(), "Max"))
+	{
+		printf("Dequeued %s instead of %s!\n", dog->name(), "Max");
+		return false;
+	}
+	delete dog;
+	
+	// Queue is now "Fraggle" (cat), "Buddy" (dog)	
+	dog = shelter.dequeueDog();
+	if(0 != strcmp(dog->name(), "Buddy"))
+	{
+		printf("Dequeued %s instead of %s!\n", dog->name(), "Max");
+		return false;
+	}
+	delete dog;
+	
+	// Queue is now "Fraggle" (cat)
+	cat = shelter.dequeueCat();
+	if(0 != strcmp(cat->name(), "Fraggle"))
+	{
+		printf("Dequeued %s instead of %s!\n", cat->name(), "Fraggle");
+		return false;
+	}
+	delete cat;
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	ThreeStacks threeStacks;
@@ -538,6 +721,9 @@ int main(int argc, char *argv[])
 	printf("\nafter sorting is\n");
 	unsorted.print();
 	printf("\n");
+
+	AnimalShelter shelter;
+	printf("\nAnimalShelter passed? %s.\n", TestAnimalShelter(shelter) ? ("Yes") : ("No"));
 	
 	return 0;
 }
