@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <list>
+#include <vector>
 #include <map>
 
 class BinaryTreeNode
@@ -65,7 +66,15 @@ public:
 	
 	const unsigned int Value() const { return _value; }
 	const size_t TreeHeight() const { return Height(this); }
-	
+
+	std::vector<std::list<BinaryTreeNode *> *> *CollectLevels()
+	{
+		std::vector<std::list<BinaryTreeNode *> *> *levels = new std::vector<std::list<BinaryTreeNode *> *>();
+		levels->push_back(new std::list<BinaryTreeNode *>());
+		CollectLevels(this, 0, *levels);
+		return levels;
+	}
+
 private:
 	static void PrintTree(BinaryTreeNode *node)
 	{
@@ -93,6 +102,28 @@ private:
 			const size_t rightHeight = Height(node->_right);
 			const size_t maxHeight = (leftHeight > rightHeight) ? (leftHeight) : (rightHeight);
 			return 1 + maxHeight;
+		}
+	}
+
+	static void CollectLevels(BinaryTreeNode *node, unsigned int level, std::vector<std::list<BinaryTreeNode *> *> &nodesAtLevel)
+	{
+		if(node != nullptr)
+		{
+			// add this node to current level
+			nodesAtLevel[level]->push_back(node);
+		
+			if(node->_left != nullptr || node->_right != nullptr)
+			{
+				if(nodesAtLevel.size() < level + 2)
+				{
+					// create the list for the next level
+					nodesAtLevel.push_back(new std::list<BinaryTreeNode *>());
+				}
+				
+				// collect the nodes at that level (and below)
+				CollectLevels(node->_left, level + 1, nodesAtLevel);
+				CollectLevels(node->_right, level + 1, nodesAtLevel);
+			}
 		}
 	}
 	
@@ -334,6 +365,18 @@ int main(int argc, char *argv[])
 	printf("Height of search tree constructed for {0, 1, 2, 3, ... 99} is %zu. (Should be 7)\n", searchTree->TreeHeight());
 	searchTree->Print();
 	printf("\n");
+	
+	printf("\nLevels of unbalanced2 tree --\n");
+	std::vector<std::list<BinaryTreeNode *> *> *levels = unbalanced2->CollectLevels();
+	for(const std::list<BinaryTreeNode *> *level : *levels)
+	{
+		printf("(");
+		for(const BinaryTreeNode *node : *level)
+		{
+			printf("%u ", node->Value());
+		}
+		printf(")\n");
+	}
 	
 	return 0;
 }
