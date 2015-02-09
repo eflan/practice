@@ -6,13 +6,28 @@
 class BinaryTreeNode
 {
 public:
-	BinaryTreeNode() : _value(0), _left(nullptr), _right(nullptr) {}
+	BinaryTreeNode() : _value(0), _left(nullptr), _right(nullptr), _parent(nullptr) {}
 	
-	BinaryTreeNode(unsigned int value) : _value(value), _left(nullptr), _right(nullptr) {}
+	BinaryTreeNode(unsigned int value) : _value(value), _left(nullptr), _right(nullptr), _parent(nullptr) {}
 	
 	BinaryTreeNode(unsigned int value, BinaryTreeNode *left, BinaryTreeNode *right)
-		: _value(value), _left(left), _right(right)
+		: _value(value), _left(left), _right(right), _parent(nullptr)
 	{
+	}
+	
+	void SetupParents()
+	{
+		if(_left != nullptr)
+		{
+			_left->_parent = this;
+			_left->SetupParents();
+		}
+		
+		if(_right != nullptr)
+		{
+			_right->_parent = this;
+			_right->SetupParents();
+		}
 	}
 	
 	const bool IsBalanced() const
@@ -67,14 +82,89 @@ public:
 	const unsigned int Value() const { return _value; }
 	const size_t TreeHeight() const { return Height(this); }
 
-	std::vector<std::list<BinaryTreeNode *> *> *CollectLevels()
+	std::vector<std::list<const BinaryTreeNode *> *> *CollectLevels() const
 	{
-		std::vector<std::list<BinaryTreeNode *> *> *levels = new std::vector<std::list<BinaryTreeNode *> *>();
-		levels->push_back(new std::list<BinaryTreeNode *>());
+		std::vector<std::list<const BinaryTreeNode *> *> *levels = new std::vector<std::list<const BinaryTreeNode *> *>();
+		levels->push_back(new std::list<const BinaryTreeNode *>());
 		CollectLevels(this, 0, *levels);
 		return levels;
 	}
+	
+	bool IsSearchTree() const
+	{
+		bool leftVerified = true;
+		bool rightVerified = true;
+		
+		if(_left != nullptr)
+		{
+			leftVerified = IsSearchTree(true, _left, true, Value(), Value());
+		}
+		
+		if(_right != nullptr)
+		{
+			rightVerified = IsSearchTree(false, _right, false, Value(), Value());
+		}
+		
+		return leftVerified && rightVerified;
+	}
 
+	/**
+	 *    3
+	 *  1   
+	 * 0 2
+	 */
+	const BinaryTreeNode *InOrderSuccessor() const
+	{
+		if(_right != nullptr)
+		{
+			return _right->Leftmost();
+		}
+		else
+		{
+			if(_parent == nullptr)
+			{
+				// if the root has no right subtree then it has no successor
+				return nullptr;
+			}
+			else if(_parent->_left == this)
+			{
+				return _parent;
+			}
+		}
+		
+		return _parent->InOrderSuccessorHelper();
+	}
+	
+	bool IsRightOfRoot() const
+	{
+		// The root is not right of itself
+		if(_parent == nullptr)
+		{
+			return false;
+		}
+		else
+		{
+			if(_parent->_parent == nullptr)
+			{
+				// We found the root so are we to the right of it?
+				return _parent->_right == this;
+			}
+		}
+		
+		// Search for the root
+		return _parent->IsRightOfRoot();
+	}
+	
+	const BinaryTreeNode *Leftmost() const
+	{
+		if(_left == nullptr)
+		{
+			return this;
+		}
+		
+		return _left->Leftmost();
+	}
+	
 private:
 	static void PrintTree(BinaryTreeNode *node)
 	{
@@ -105,7 +195,7 @@ private:
 		}
 	}
 
-	static void CollectLevels(BinaryTreeNode *node, unsigned int level, std::vector<std::list<BinaryTreeNode *> *> &nodesAtLevel)
+	static void CollectLevels(const BinaryTreeNode *node, unsigned int level, std::vector<std::list<const BinaryTreeNode *> *> &nodesAtLevel)
 	{
 		if(node != nullptr)
 		{
@@ -117,7 +207,7 @@ private:
 				if(nodesAtLevel.size() < level + 2)
 				{
 					// create the list for the next level
-					nodesAtLevel.push_back(new std::list<BinaryTreeNode *>());
+					nodesAtLevel.push_back(new std::list<const BinaryTreeNode *>());
 				}
 				
 				// collect the nodes at that level (and below)
@@ -126,10 +216,66 @@ private:
 			}
 		}
 	}
-	
+
+	static bool IsSearchTree(const bool isLeftOfRoot, const BinaryTreeNode *node, const bool isLeftOfParent, const unsigned int rootValue, const unsigned int parentValue)
+	{
+		if(node == nullptr)
+		{
+			return true;
+		}
+
+		if(isLeftOfRoot)
+		{
+			if(node->Value() >= rootValue)
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if(node->Value() < rootValue)
+			{
+				return false;
+			}
+		}
+		
+		if(isLeftOfParent)
+		{
+			if(node->Value() >= parentValue)
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if(node->Value() < parentValue)
+			{
+				return false;
+			}
+		}
+		
+		return IsSearchTree(isLeftOfRoot, node->_left, true, rootValue, node->Value()) &&
+		       IsSearchTree(isLeftOfRoot, node->_right, false, rootValue, node->Value());
+	}
+
+	BinaryTreeNode *InOrderSuccessorHelper() const
+	{
+		if(_parent == nullptr)
+		{
+			return nullptr;
+		}
+		else if(_parent->_left == this)
+		{
+			return _parent;
+		}
+		
+		return _parent->InOrderSuccessorHelper();
+	}
+
 	unsigned int _value;
 	BinaryTreeNode *_left;
 	BinaryTreeNode *_right;
+	BinaryTreeNode *_parent;
 };
 
 class DirectedNode
@@ -207,7 +353,7 @@ void SortedArrayToBinarySearchTreeHelper(BinaryTreeNode *root, size_t count, uns
 
 /**
  * 0 1 2 3 4 5 6 7 8 9
- * 
+ *
  *    4
  *  2   7
  * 1 3 6 8
@@ -290,8 +436,15 @@ int main(int argc, char *argv[])
 	printf("balanced2 is balanced? %s.\n", balanced2->IsBalanced() ? ("Yes") : ("No"));
 	printf("balanced3 is balanced? %s.\n", balanced3->IsBalanced() ? ("Yes") : ("No"));
 	printf("balanced4 is balanced? %s.\n", balanced4->IsBalanced() ? ("Yes") : ("No"));
-	printf("unalanced1 is balanced? %s.\n", unbalanced1->IsBalanced() ? ("Yes") : ("No"));
-	printf("unalanced2 is balanced? %s.\n", unbalanced2->IsBalanced() ? ("Yes") : ("No"));
+	printf("unbalanced1 is balanced? %s.\n", unbalanced1->IsBalanced() ? ("Yes") : ("No"));
+	printf("unbalanced2 is balanced? %s.\n", unbalanced2->IsBalanced() ? ("Yes") : ("No"));
+	
+	printf("balanced1->IsSearchTree()? %s (Should be No).\n", balanced1->IsSearchTree() ? ("Yes") : ("No"));
+	printf("balanced2->IsSearchTree()? %s (Should be No).\n", balanced2->IsSearchTree() ? ("Yes") : ("No"));
+	printf("balanced3->IsSearchTree()? %s (Should be No).\n", balanced3->IsSearchTree() ? ("Yes") : ("No"));
+	printf("balanced4->IsSearchTree()? %s (Should be No).\n", balanced4->IsSearchTree() ? ("Yes") : ("No"));
+	printf("unbalanced1->IsSearchTree()? %s (Should be No).\n", unbalanced1->IsSearchTree() ? ("Yes") : ("No"));
+	printf("unbalanced2->IsSearchTree()? %s (Should be No).\n", unbalanced2->IsSearchTree() ? ("Yes") : ("No"));
 	
 	// graph looks like so
 	//
@@ -341,14 +494,16 @@ int main(int argc, char *argv[])
 
 	unsigned int array[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 	BinaryTreeNode *searchTree = SortedArrayToBinarySearchTree(10, array);
-	printf("\nHeight of search tree constructed for {0, 1, 2, 3, 4, 5, 6, 7, 8, 9} is %zu. (Should be 4)\n", searchTree->TreeHeight());
+	printf("\nHeight of search tree constructed for {0, 1, 2, 3, 4, 5, 6, 7, 8, 9} is %zu. (Should be 4)\n\n", searchTree->TreeHeight());
 	searchTree->Print();
-	printf("\n");
+	printf("\n\n");
+	printf("searchTree->IsSearchTree()? %s (Should be Yes).\n\n", searchTree->IsSearchTree() ? ("Yes") : ("No"));
 
 	searchTree = SortedArrayToBinarySearchTree(5, array);
-	printf("Height of search tree constructed for {0, 1, 2, 3, 4} is %zu. (Should be 3)\n", searchTree->TreeHeight());
+	printf("Height of search tree constructed for {0, 1, 2, 3, 4} is %zu. (Should be 3)\n\n", searchTree->TreeHeight());
 	searchTree->Print();
-	printf("\n");
+	printf("\n\n");
+	printf("searchTree->IsSearchTree()? %s (Should be Yes).\n\n", searchTree->IsSearchTree() ? ("Yes") : ("No"));
 
 	unsigned int array100[100] = {  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,
 		                           10,  11,  12,  13,  14,  15,  16,  17,  18,  19,
@@ -362,13 +517,14 @@ int main(int argc, char *argv[])
 		                           90,  91,  92,  93,  94,  95,  96,  97,  98,  99 };
 		                        
 	searchTree = SortedArrayToBinarySearchTree(100, array100);
-	printf("Height of search tree constructed for {0, 1, 2, 3, ... 99} is %zu. (Should be 7)\n", searchTree->TreeHeight());
+	printf("Height of search tree constructed for {0, 1, 2, 3, ... 99} is %zu. (Should be 7)\n\n", searchTree->TreeHeight());
 	searchTree->Print();
-	printf("\n");
-	
+	printf("\n\n");
+	printf("searchTree->IsSearchTree()? %s (Should be Yes).\n\n", searchTree->IsSearchTree() ? ("Yes") : ("No"));
+
 	printf("\nLevels of unbalanced2 tree --\n");
-	std::vector<std::list<BinaryTreeNode *> *> *levels = unbalanced2->CollectLevels();
-	for(const std::list<BinaryTreeNode *> *level : *levels)
+	std::vector<std::list<const BinaryTreeNode *> *> *levels = unbalanced2->CollectLevels();
+	for(const std::list<const BinaryTreeNode *> *level : *levels)
 	{
 		printf("(");
 		for(const BinaryTreeNode *node : *level)
@@ -377,6 +533,52 @@ int main(int argc, char *argv[])
 		}
 		printf(")\n");
 	}
+	
+	BinaryTreeNode *basicInorderTest = new BinaryTreeNode(1, new BinaryTreeNode(0), new BinaryTreeNode(2));
+	basicInorderTest->SetupParents();
+	
+	const BinaryTreeNode *leftmost = basicInorderTest->Leftmost();
+	printf("\nBasic InOrder: ");
+	BinaryTreeNode *next = const_cast<BinaryTreeNode *>(leftmost);
+	do
+	{
+		printf("%u, ", next->Value());
+		next = const_cast<BinaryTreeNode *>(next->InOrderSuccessor());
+	}while(next != nullptr);
+	printf("\n");
+	
+	/**
+	 *         7
+	 *    3         11
+	 *  1   5    9     13
+	 * 0 2 4 6  8 10  12 14
+	 */
+	BinaryTreeNode *inorderTest = new BinaryTreeNode(7,
+	                                                 new BinaryTreeNode(3,
+	                                                                    new BinaryTreeNode(1,
+	                                                                                       new BinaryTreeNode(0),
+	                                                                                       new BinaryTreeNode(2)),
+	                                                                    new BinaryTreeNode(5,
+	                                                                                       new BinaryTreeNode(4),
+	                                                                                       new BinaryTreeNode(6))),
+	                                                 new BinaryTreeNode(11,
+	                                                                    new BinaryTreeNode(9,
+	                                                                                       new BinaryTreeNode(8),
+	                                                                                       new BinaryTreeNode(10)),
+	                                                                    new BinaryTreeNode(13,
+	                                                                                       new BinaryTreeNode(12),
+	                                                                                       new BinaryTreeNode(14))));
+	inorderTest->SetupParents();
+	
+	const BinaryTreeNode *leftmost2 = inorderTest->Leftmost();
+	printf("InOrder: ");
+	next = const_cast<BinaryTreeNode *>(leftmost2);
+	do
+	{
+		printf("%u, ", next->Value());
+		next = const_cast<BinaryTreeNode *>(next->InOrderSuccessor());
+	}while(next != nullptr);
+	printf("\n");
 	
 	return 0;
 }
