@@ -15,6 +15,21 @@ public:
 	{
 	}
 	
+	const BinaryTreeNode *Left() const
+	{
+		return _left;
+	}
+
+	const BinaryTreeNode *Right() const
+	{
+		return _right;
+	}
+	
+	const BinaryTreeNode *CommonAncestor(const BinaryTreeNode *node1, const BinaryTreeNode *node2) const
+	{
+		return CommonAncestor(this, node1, node2);
+	}
+	
 	void SetupParents()
 	{
 		if(_left != nullptr)
@@ -270,6 +285,90 @@ private:
 		}
 		
 		return _parent->InOrderSuccessorHelper();
+	}
+	
+	static const BinaryTreeNode *CommonAncestor(const BinaryTreeNode *root, const BinaryTreeNode *node1, const BinaryTreeNode *node2)
+	{
+		// If either node is the root then they cannot share a common ancestor
+		if(node1 == root || node2 == root)
+		{
+			return nullptr;
+		}
+		else if(node1 == node2)
+		{
+			return FindParent(root, node1);
+		}
+		else
+		{
+			if(Contains(root->_left, node1))
+			{
+				if(Contains(root->_right, node2))
+				{
+					return root;
+				}
+				else
+				{
+					// both nodes are on the left subtree
+					return CommonAncestor(root->_left, node1, node2);
+				}
+			}
+			else
+			{
+				if(Contains(root->_left, node2))
+				{
+					return root;
+				}
+				else
+				{
+					// both nodes are on the right subtree
+					return CommonAncestor(root->_right, node1, node2);					
+				}
+			}
+		}
+	}
+	
+	static bool Contains(const BinaryTreeNode *root, const BinaryTreeNode *target)
+	{
+		if(root == nullptr)
+		{
+			return false;
+		}
+		else if(root == target)
+		{
+			return true;
+		}
+		
+		return Contains(root->_left, target) || Contains(root->_right, target);
+	}
+	
+	static const BinaryTreeNode *FindParent(const BinaryTreeNode *curNode, const BinaryTreeNode *target)
+	{
+		if(curNode->_left == target || curNode->_right == target)
+		{
+			return curNode;
+		}
+		else
+		{
+			if(curNode->_left != nullptr)
+			{
+				const BinaryTreeNode *possible = FindParent(curNode->_left, target);
+				if(possible != nullptr)
+				{
+					return possible;
+				}
+			}
+			
+			if(curNode->_right != nullptr)
+			{
+				const BinaryTreeNode *possible = FindParent(curNode->_right, target);
+				if(possible != nullptr)
+				{
+					return possible;
+				}
+			}
+		}
+		
+		return nullptr;
 	}
 
 	unsigned int _value;
@@ -580,5 +679,24 @@ int main(int argc, char *argv[])
 	}while(next != nullptr);
 	printf("\n");
 	
+	printf("\nCommon ancestor of 14 and 10 is %u (Should be 11).\n",
+	       inorderTest->CommonAncestor(inorderTest->Right()->Right()->Right(),
+									   inorderTest->Right()->Left()->Right())->Value());
+
+	printf("Common ancestor of 13 and 10 is %u (Should be 11).\n",
+	       inorderTest->CommonAncestor(inorderTest->Right()->Right(),
+									   inorderTest->Right()->Left()->Right())->Value());
+
+	printf("Common ancestor of 13 and 9 is %u (Should be 11).\n",
+	       inorderTest->CommonAncestor(inorderTest->Right()->Right(),
+									   inorderTest->Right()->Left())->Value());
+
+	printf("Common ancestor of 13 and 2 is %u (Should be 7).\n",
+	       inorderTest->CommonAncestor(inorderTest->Right()->Right(),
+									   inorderTest->Left()->Left()->Left())->Value());
+
+	printf("Common ancestor of 5 and 2 is %u (Should be 3).\n",
+	       inorderTest->CommonAncestor(inorderTest->Left()->Right(),
+									   inorderTest->Left()->Left()->Left())->Value());
 	return 0;
 }
