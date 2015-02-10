@@ -63,11 +63,38 @@ void TestInsertBits(const unsigned int N, const unsigned int M, const unsigned i
 
 }
 
+bool mystery(int n)
+{
+	// tests if n is a power of 2
+	return (n & (n - 1)) == 0;
+}
+
 int main(int argc, char *argv[])
 {
 	TestInsertBits(1024, 19, 2, 6);
 	TestInsertBits(0xffffffff, 19, 2, 6);
 	TestInsertBits(0xffffffff, 19, 27, 31);
+	
+	printf("\n");
+	char binaryN[33];
+	char binaryNMinus1[33];
+	
+	for(int i = 1; i <= 1024; i *= 2)
+	{
+		uint_to_binary(i, binaryN);
+		uint_to_binary(i - 1, binaryNMinus1);
+		printf("(%u & %u) a.k.a. (%s & %s) == 0? %s.\n", i, i - 1, binaryN, binaryNMinus1, mystery(i) ? ("Yes") : ("No"));
+	}
+	
+	printf("\n");
+	
+	for(int i = 2; i <= 1025; i *= 2)
+	{
+		uint_to_binary(i + 1, binaryN);
+		uint_to_binary(i, binaryNMinus1);
+		printf("(%u & %u) a.k.a. (%s & %s) == 0? %s.\n", i + 1, i, binaryN, binaryNMinus1, mystery(i + 1) ? ("Yes") : ("No"));
+	}
+	
 	
 	return 0;
 }
