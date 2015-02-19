@@ -224,6 +224,69 @@ unsigned int SwapEvenAndOddBits(const unsigned int n)
 	return output;
 }
 
+class BinaryUInt
+{
+public:
+	BinaryUInt(unsigned int n = 0U) : _num(n) {}
+	
+	void SetNum(unsigned int n)
+	{
+		_num = n;
+	}
+	
+	void Print()
+	{
+		char binary[33];
+		uint_to_binary(_num, binary);
+		printf("BinaryUInt: %s\n", binary);
+	}
+	
+	bool GetBit(unsigned int i)
+	{
+		return (_num & (1U << i)) != 0;
+	}
+	
+private:
+	unsigned int _num;
+};
+
+unsigned int MissingNumber(BinaryUInt *array, size_t count)
+{
+	unsigned int expectedOneBits[32] = {};
+	unsigned int foundOneBits[32] = {};
+	unsigned int place = 1;
+	unsigned int missing = 0;
+	
+	for(unsigned int i = 0; i < count; i++)
+	{
+		array[i].Print();
+	}
+	
+	for(unsigned int i = 0; i < 32; i++)
+	{
+		for(unsigned int k = 0; k < count + 1; k++)
+		{
+			if(((k / place) % 2) != 0)
+			{
+				expectedOneBits[i]++;
+			}
+			if(k < count && array[k].GetBit(i))
+			{
+				foundOneBits[i]++;
+			}
+		}
+		place *= 2;
+		
+		if(foundOneBits[i] < expectedOneBits[i])
+		{
+			printf("Expected %u 1 bits for the %uth bit but found %u 1 bits instead.\n", expectedOneBits[i], i, foundOneBits[i]);
+			missing |= (1U << i);
+		}
+	}
+	
+	return missing;
+}
+
 int main(int argc, char *argv[])
 {
 	TestInsertBits(1024, 19, 2, 6);
@@ -283,5 +346,30 @@ int main(int argc, char *argv[])
 	uint_to_binary(swapped, binaryOutput);
 	printf("Swap even and odd bits of %u = %s -> %s = %u.\n", 17, binaryInput, binaryOutput, swapped);
 
+	printf("\n");
+	BinaryUInt array[10];
+	for(unsigned int i = 0; i < 9; i++)
+	{
+		array[i].SetNum(i);
+	}
+	array[9].SetNum(10);
+	
+	// 9 is the missing number
+	
+	unsigned int missing = MissingNumber(array, 10);
+	printf("Missing number is %u\n", missing);
+
+	BinaryUInt array100[100];
+	for(unsigned int i = 0; i < 100; i++)
+	{
+		array100[i].SetNum(i);
+	}
+	array100[88].SetNum(100);
+	
+	// 88 is the missing number
+	
+	missing = MissingNumber(array100, 100);
+	printf("Missing number is %u\n", missing);
+	
 	return 0;
 }
