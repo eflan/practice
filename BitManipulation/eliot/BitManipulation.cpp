@@ -109,6 +109,75 @@ void PrintBinary(double d)
 	}
 }
 
+/**
+ * Given a positive integer, print the next smallest and next largest
+ * number that have the same number of one bits in their binary
+ * represenation.
+ */
+const unsigned int NextLargestWithSameCountOneBits(const unsigned int n)
+{	
+	// (1) start at lowest bit,	
+	// (2) find a one bit that is before a zero bit,
+	for(unsigned int lowestBit = 0; lowestBit < 31; lowestBit++)
+	{
+		if((n & (1U << lowestBit)) != 0 && (n & (1U << (lowestBit + 1))) == 0)
+		{
+			// (3) shift that bit into the zero bit
+			unsigned int nextLargest = n & ~(1U << lowestBit);
+			nextLargest |= (1U << (lowestBit + 1));
+			return nextLargest;
+		}
+	}
+	
+	// Default to n itself if we fail to construct the next largest
+	// number with the same number of one bits.
+	return n;
+}
+
+const unsigned int NextSmallestWithSameCountOneBits(unsigned int n)
+{
+	// (1) start at higest bit,	
+	// (2) find a one bit that is before a zero bit,
+	for(unsigned int highestBit = 31; highestBit > 0; highestBit--)
+	{		
+		if((n & (1U << highestBit)) != 0 && (n & (1U << (highestBit - 1))) == 0)
+		{
+			// (3) shift that bit into the zero bit
+			unsigned int nextSmallest = n & ~(1U << highestBit);
+			nextSmallest |= (1U << (highestBit - 1));
+			return nextSmallest;
+		}
+	}
+	
+	// Default to n itself if we fail to construct the next largest
+	// number with the same number of one bits.
+	return n;
+}
+
+void TestNextLargest(const unsigned int n)
+{
+	const unsigned int nextLargest = NextLargestWithSameCountOneBits(n);
+	
+	char binary[33];
+	uint_to_binary(n, binary);
+	printf("               %.3u = %s\n", n, binary);
+	
+	uint_to_binary(nextLargest, binary);
+	printf("next largest = %.3u = %s\n", nextLargest, binary);
+}
+
+void TestNextSmallest(const unsigned int n)
+{
+	const unsigned int nextSmallest = NextSmallestWithSameCountOneBits(n);
+	
+	char binary[33];
+	uint_to_binary(n, binary);
+	printf("                %.3u = %s\n", n, binary);
+	
+	uint_to_binary(nextSmallest, binary);
+	printf("next smallest = %.3u = %s\n", nextSmallest, binary);
+}
+
 bool mystery(int n)
 {
 	// tests if n is a power of 2
@@ -147,5 +216,17 @@ int main(int argc, char *argv[])
 	PrintBinary(0.125d);
 	PrintBinary(0.25d + 0.125d);
 	
+	printf("\n");
+	for(unsigned int n = 0; n < 10; n++)
+	{
+		TestNextLargest(n);
+	}
+	
+	printf("\n");
+	for(unsigned int n = 0; n < 10; n++)
+	{
+		TestNextSmallest(n);
+	}
+
 	return 0;
 }
