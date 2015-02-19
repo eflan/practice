@@ -200,6 +200,30 @@ unsigned int CountBitsToConvertAtoB(const unsigned int A, const unsigned int B)
 	return count;
 }
 
+unsigned int SwapEvenAndOddBits(const unsigned int n)
+{
+	unsigned int output = 0;
+	
+	// walk the bits from lowest to highest
+	// if the next one matches then keep moving
+	// otherwise, swap them
+	for(unsigned int i = 0; i < 32; i += 2)
+	{
+		unsigned int lowBit = n & (1U << i);
+		unsigned int highBit = n & (1U << (i + 1));
+		
+		if(lowBit != highBit)
+		{
+			lowBit <<= 1;
+			highBit >>= 1;
+		}
+		
+		output |= lowBit | highBit;
+	}
+	
+	return output;
+}
+
 int main(int argc, char *argv[])
 {
 	TestInsertBits(1024, 19, 2, 6);
@@ -250,6 +274,14 @@ int main(int argc, char *argv[])
 	printf("You would need to flip %u bits to convert %u to %u.\n", CountBitsToConvertAtoB(31, 0), 31, 0);
 	printf("You would need to flip %u bits to convert %u to %u.\n", CountBitsToConvertAtoB(31, 31), 31, 31);
 	printf("You would need to flip %u bits to convert %u to %u.\n", CountBitsToConvertAtoB(31, 30), 31, 30);
+
+	printf("\n");
+	unsigned int swapped = SwapEvenAndOddBits(17);
+	char binaryInput[33];
+	uint_to_binary(17, binaryInput);
+	char binaryOutput[33];
+	uint_to_binary(swapped, binaryOutput);
+	printf("Swap even and odd bits of %u = %s -> %s = %u.\n", 17, binaryInput, binaryOutput, swapped);
 
 	return 0;
 }
