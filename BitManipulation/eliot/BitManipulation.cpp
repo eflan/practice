@@ -184,6 +184,22 @@ bool mystery(int n)
 	return (n & (n - 1)) == 0;
 }
 
+unsigned int CountBitsToConvertAtoB(const unsigned int A, const unsigned int B)
+{
+	// gather all bits that do not match in A and B
+	unsigned int doNotMatch = A ^ B;
+	unsigned int count = 0;
+	
+	// count all one bits in doNotMatch
+	for(unsigned int i = 0; i < 32; i++)
+	{
+		count += (doNotMatch & 1U);
+		doNotMatch >>= 1;
+	}
+	
+	return count;
+}
+
 int main(int argc, char *argv[])
 {
 	TestInsertBits(1024, 19, 2, 6);
@@ -227,6 +243,13 @@ int main(int argc, char *argv[])
 	{
 		TestNextSmallest(n);
 	}
+	
+	printf("\n");
+	printf("You would need to flip %u bits to convert %u to %u.\n", CountBitsToConvertAtoB(29, 15), 29, 15);
+	printf("You would need to flip %u bits to convert %u to %u.\n", CountBitsToConvertAtoB(31, 15), 31, 15);
+	printf("You would need to flip %u bits to convert %u to %u.\n", CountBitsToConvertAtoB(31, 0), 31, 0);
+	printf("You would need to flip %u bits to convert %u to %u.\n", CountBitsToConvertAtoB(31, 31), 31, 31);
+	printf("You would need to flip %u bits to convert %u to %u.\n", CountBitsToConvertAtoB(31, 30), 31, 30);
 
 	return 0;
 }
