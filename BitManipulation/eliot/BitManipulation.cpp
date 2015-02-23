@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include <string.h>
 
+void byte_to_binary(char x, char *binary)
+{
+    binary[0] = '\0';
+
+    unsigned int z;
+    for (z = 128; z > 0; z >>= 1)
+    {
+        strcat(binary, ((x & z) == z) ? "1" : "0");
+    }
+}
+
 void uint_to_binary(unsigned int x, char *binary)
 {
     binary[0] = '\0';
@@ -287,6 +298,58 @@ unsigned int MissingNumber(BinaryUInt *array, size_t count)
 	return missing;
 }
 
+size_t RowOffset(size_t pxWidth, size_t y)
+{
+	return y * (pxWidth / 8);
+}
+
+size_t SetBitsFrom(char *rasterByte, size_t bit)
+{
+	unsigned char full = 0xff;
+	full >>= bit;
+	*rasterByte = full;
+	char binary[9] = {};
+	byte_to_binary(full, binary);
+	printf("SetBitsFrom (bit %zu) = %s\n", bit, binary);
+	return 8 - bit;
+}
+
+size_t SetBitsTo(char *rasterByte, size_t bit)
+{
+	unsigned char full = 0xff;
+	full >>= bit;
+	*rasterByte = ~full;
+	char binary[9] = {};
+	byte_to_binary(~full, binary);
+	printf("SetBitsTo (bit %zu) = %s\n", bit, binary);
+	return bit;
+}
+
+void DrawLine(size_t screenSize, char *screen, size_t pxWidth, size_t x1, size_t x2, size_t y)
+{
+	// x1, x2, and y are all bit indices that correspond to pixels
+	size_t lineLength = x2 - x1;
+	
+	// start of the line
+	const size_t lineStartByte = RowOffset(pxWidth, y) + (x1 / 8);
+	// end of the line
+	const size_t lineEndByte = RowOffset(pxWidth, y) + (x2 / 8);
+
+	printf("\nLineStartByte = %zu, LineEndByte = %zu, LineLength = %zu\n", lineStartByte, lineEndByte, lineLength);
+	
+	size_t countBitsSet = SetBitsFrom(&(screen[lineStartByte]), (x1 % 8));
+	lineLength -= countBitsSet;
+		
+	countBitsSet = SetBitsTo(&(screen[lineEndByte]), (x2 % 8));
+	lineLength -= countBitsSet;
+	
+	// fill bytes in between
+	for(size_t i = 0; i < lineLength; i += 8)
+	{
+		screen[lineStartByte + 1 + (i / 8)] = 0xff;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	TestInsertBits(1024, 19, 2, 6);
@@ -371,5 +434,19 @@ int main(int argc, char *argv[])
 	missing = MissingNumber(array100, 100);
 	printf("Missing number is %u\n", missing);
 	
+	char screen[80 * 10] = {};
+	DrawLine(sizeof(screen), screen, 80, 50, 78, 50);
+	
+	printf("\nScreen with a line\n");
+	char binary[9] = {};
+	for(size_t i = 0; i < 80; i++)
+	{
+		for(size_t k = 0; k < 10; k++)
+		{			
+			byte_to_binary(screen[(i * 10) + k], binary);
+			printf("%s ", binary);
+		}
+		printf(" [bytes %zu to %zu]\n", (i * 10), (i * 10) + 9);
+	}
 	return 0;
 }
