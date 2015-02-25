@@ -252,7 +252,16 @@ private:
 };
 
 typedef uint64_t PlayerID;
-	
+
+class MismatchedPlayerException : public std::exception
+{
+public:
+	virtual const char* what() const throw()
+	{
+		return "Player not associated with this game.";
+	}
+};
+
 class BlackJack
 {
 public:
@@ -341,6 +350,7 @@ public:
 		}
 
 	private:
+		friend class BlackJack;
 		BlackJack *_blackJack;
 	};
 	
@@ -352,6 +362,13 @@ public:
 	const Player &addPlayer()
 	{
 		Player newPlayer(this);
+		
+		//
+		// IDs are 64-bit unsigned integers so we cannot end up in the
+		// situation in which we run out of player IDs without first
+		// running out of addressable memory.
+		//
+		
 		newPlayer.ID = _nextID;
 		_nextID++;
 		
@@ -362,6 +379,7 @@ public:
 	// Reference to player is invalid after removePlayer returns true
 	void removePlayer(const Player &player)
 	{
+		CheckFromThisGame(player);
 		_players.erase(player.ID);
 	}
 	
@@ -384,21 +402,25 @@ public:
 	
 	const bool busted(const Player &player) const
 	{
+		CheckFromThisGame(player);
 		return total(player) > 21;		
 	}
 	
 	const bool busted(const Dealer &dealer) const
 	{
+		CheckFromThisGame(dealer);
 		return total(dealer) > 21;
 	}
 	
 	bool hasBlackJack(const Player &player) const
 	{
+		CheckFromThisGame(player);
 		return (_players.at(player.ID).hand.size() == 2) && total(player) == 21;
 	}
 	
 	const unsigned int total(const Dealer &dealer) const
 	{
+		CheckFromThisGame(dealer);
 		// there is only one dealer so nothing to look up
 		std::vector<Card> handPlusHole = _dealer.hand;
 		handPlusHole.push_back(_dealer.hole);
@@ -407,22 +429,25 @@ public:
 		
 	const unsigned int total(const Player &player) const
 	{
+		CheckFromThisGame(player);
 		return total(_players.at(player.ID).hand);
 	}
 	
 	void hit(const Player &player)
 	{
+		CheckFromThisGame(player);
 		_players.at(player.ID).hand.push_back(_cards.dealCard());
 	}
 	
 	void hit(const Dealer &dealer)
 	{
+		CheckFromThisGame(dealer);
 		// there's only one dealer so no need to look anything up
 		_dealer.hand.push_back(_cards.dealCard());
 	}
 	
 private:
-	const unsigned int total(const std::vector<Card> &hand) const
+	static const unsigned int total(const std::vector<Card> &hand)
 	{
 		unsigned int total = 0;
 		
@@ -451,7 +476,24 @@ private:
 		return total;
 	}
 		
-private:
+	void CheckFromThisGame(const Dealer &dealer) const
+	{
+		CheckFromThisGame(&(dealer._blackJack));
+	}
+
+	void CheckFromThisGame(const Player &player) const
+	{
+		CheckFromThisGame(player._blackJack);
+	}
+
+	void CheckFromThisGame(const BlackJack *blackJack) const
+	{
+		if(blackJack != this)
+		{
+			throw MismatchedPlayerException();
+		}
+	}
+
 	MultiDeckCardGame _cards;
 	Dealer _dealer;
 	std::unordered_map<PlayerID, Player> _players;
