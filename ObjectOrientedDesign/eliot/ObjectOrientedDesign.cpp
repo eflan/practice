@@ -278,17 +278,14 @@ private:
 		const PlayerID ID() const { return _ID; }
 		const std::vector<Card> Hand() const { return _hand; }
 		
-		virtual const unsigned int total() const
-		{
-			return BlackJack::total(AllCards());
-		}
-		
-		virtual const bool busted() const
+		virtual const unsigned int showingTotal() const = 0;
+				
+		const bool busted() const
 		{
 			return BlackJack::busted(AllCards());
 		}
 		
-		virtual const bool hasBlackJack() const
+		const bool hasBlackJack() const
 		{
 			return BlackJack::hasBlackJack(AllCards());
 		}
@@ -297,14 +294,19 @@ private:
 		// hit() is the only permissible way to modify a PlayerBase
 		// from its public interface.
 		//
-		void hit() const
+		void hit()
 		{
-			_blackJack->hit(*const_cast<PlayerBase *>(this));
+			_blackJack->hit(*this);
 		}
 		
 	protected:
 		friend class BlackJack;
 	
+		const unsigned int total() const
+		{
+			return BlackJack::total(AllCards());
+		}
+
 		void hitMe(const Card &card)
 		{
 			_hand.push_back(card);
@@ -318,40 +320,7 @@ private:
 		BlackJack *_blackJack;
 	};
 
-public:
-	enum Ending {NotEnded, DealerBust, PlayerBust, Push, PlayerBlackJack, DealerBlackJack, PlayerWin, PlayerLose};
-	
-	static void PrintEnding(Ending end) 
-	{
-		switch(end)
-		{
-		case NotEnded:
-			printf("BlackJack game is not over.\n");
-			break;
-		case DealerBust:
-			printf("Dealer busted!\n");
-			break;
-		case PlayerBust:
-			printf("Player busted!\n");
-			break;
-		case Push:
-			printf("Push.\n");
-			break;
-		case PlayerBlackJack:
-			printf("Player blackjack!\n");
-			break;
-		case DealerBlackJack:
-			printf("Dealer blackjack :-(\n");
-			break;
-		case PlayerWin:
-			printf("Player wins!\n");
-			break;
-		case PlayerLose:
-			printf("Player loses :-(\n");
-			break;
-		};
-	}
-	
+public:	
 	BlackJack(unsigned int numDecks)
 		:_cards(numDecks),
 		 _dealer(0, this),
@@ -367,6 +336,11 @@ public:
 			: PlayerBase(ID, blackJack),
 			  _hole()
 		{
+		}
+		
+		const unsigned int showingTotal() const
+		{
+			return BlackJack::total(_hand);
 		}
 				
 	private:
@@ -406,6 +380,11 @@ public:
 			
 			return *this;
 		}
+		
+		const unsigned int showingTotal() const
+		{
+			return total();
+		}
 
 	private:
 		friend class BlackJack;
@@ -427,19 +406,25 @@ public:
 	{
 	public:
 		Table(const Dealer *d, const std::vector<Player *> p)
-			: _end(NotEnded),
+			: _ended(false),
 			  _dealer(d),
 			  _players(p)
 		{
 		}
 		
-		Table(Ending end) : _end(end), _dealer(nullptr), _players() {}
+		Table(const bool ended) : _ended(ended), _dealer(nullptr), _players() {}
+	
+		// indicates that the game is over immediately after the deal
+		bool hasEnded() const
+		{
+			return _ended;
+		}
 	
 		const Dealer &dealer() const
 		{
-			if(_end != NotEnded)
+			if(_ended)
 			{
-				throw _end;
+				throw "Game is already over!";
 			}
 			else
 			{
@@ -447,11 +432,11 @@ public:
 			}
 		}
 		
-		const Player &operator[](size_t index) const
+		Player &operator[](size_t index) const
 		{
-			if(_end != NotEnded)
+			if(_ended)
 			{
-				throw _end;
+				throw "Game is already over!";
 			}
 			else
 			{
@@ -460,7 +445,7 @@ public:
 		}
 		
 	private:
-		Ending _end;
+		const bool _ended;
 		const Dealer *_dealer;
 		const std::vector<Player *> _players;
 	};
@@ -501,7 +486,7 @@ public:
 		// Check the dealer for blackjack before any of the players
 		if(_dealer.hasBlackJack())
 		{
-			Table table(DealerBlackJack);
+			Table table(true);
 			return table;
 		}
 		else
@@ -511,7 +496,7 @@ public:
 			{
 				if(pair.second.hasBlackJack())
 				{
-					Table table(PlayerBlackJack);
+					Table table(true);
 					return table;
 				}
 			}
@@ -521,67 +506,142 @@ public:
 		return table;
 	}
 	
-	Ending endGame(const Table &table)
+	class GameEnd
 	{
-		const Dealer &theDealer = table.dealer();
-		if(&theDealer != &_dealer)
+	public:
+		GameEnd(const std::vector<PlayerBase *> &winners)
+			: _winners(winners)
 		{
-			throw MismatchedPlayerException();
 		}
 		
-		printf("Dealer final hand is\n");
-		for(const Card &card : _dealer.AllCards())
+		GameEnd() : _winners() {}
+		
+		const std::vector<PlayerBase *> &winners() const
+		{
+			return _winners;
+		}
+		
+		virtual void printEnding() const = 0;
+		
+	protected:
+		void push_back(PlayerBase *player)
+		{
+			_winners.push_back(player);
+		}
+		
+	private:
+		std::vector<PlayerBase *> _winners;
+	};
+	
+	class DealerWins : public GameEnd
+	{
+	public:
+		DealerWins(Dealer *dealer)
+		{
+			push_back(dealer);
+		}
+
+		virtual void printEnding() const
+		{
+			const PlayerBase *dealer = winners()[0];
+			if(dealer->hasBlackJack())
+			{
+				printf("Dealer wins with Black Jack.\n");
+			}
+			else
+			{
+				printf("Dealer wins with a total of %u.\n", dealer->total());
+			}
+		}
+	};
+
+	class PlayerWins : public GameEnd
+	{
+	public:
+		PlayerWins(const std::vector<PlayerBase *> winners) : GameEnd(winners) {}
+
+		virtual void printEnding() const
+		{
+			for(const PlayerBase *player : winners())
+			{
+				if(player->hasBlackJack())
+				{
+					printf("Player %lu wins with Black Jack.\n", player->ID());
+				}
+				else
+				{
+					printf("Player %lu wins with a total of %u.\n", player->ID(), player->total());
+				}
+			}
+		}
+	};
+	
+	const GameEnd *endGame(const Table &table)
+	{
+		if(!table.hasEnded())
+		{
+			const Dealer &theDealer = table.dealer();
+			if(&theDealer != &_dealer)
+			{
+				throw MismatchedPlayerException();
+			}
+		}
+		
+		printHand("\nDealer shows\n", _dealer.AllCards());
+		
+		unsigned int dealerTotal = _dealer.total();
+		while(dealerTotal < 16)
+		{
+			printf("\nDealer hits.\n");
+			
+			_dealer.hit();
+			dealerTotal = _dealer.total();
+			
+			if(_dealer.busted())
+			{
+				printHand("Dealer busted!\n", _dealer.AllCards());
+			}
+			else
+			{
+				printHand("Dealer is showing\n", _dealer.AllCards());
+			}
+			
+			printf("Total of %u.\n", dealerTotal);
+		}
+	
+		std::vector<PlayerBase *> winners;
+		dealerTotal = _dealer.total();
+		
+		for(std::pair<const PlayerID, Player> &pair : _players)
+		{
+			Player *player = &pair.second;
+			if((_dealer.busted() && !player->busted()) || (dealerTotal < player->total()))
+			{
+				winners.push_back(player);
+			}
+		}
+	
+		if(winners.empty())
+		{
+			return new DealerWins(&_dealer);
+		}
+		else
+		{
+			return new PlayerWins(winners);
+		}
+	}
+	
+	static void printHand(const char *const msg, const std::vector<Card> &hand)
+	{
+		printf("%s", msg);
+		for(const Card &card : hand)
 		{
 			card.Print();
 			printf("\n");
 		}
-
-		for(const std::pair<const PlayerID, const Player> &pair : _players)
-		{
-			printf("\nPlayer final hand is\n");
-			for(const Card &card : pair.second.Hand())
-			{
-				card.Print();
-				printf("\n");
-			}
-		}
-		printf("\n");
-		
-		if(_dealer.busted())
-		{
-			return DealerBust;
-		}
-		else
-		{			
-			const unsigned int dealerTotal = _dealer.total();
-			
-			for(const std::pair<const PlayerID, const Player> &pair : _players)
-			{
-				const unsigned int playerTotal = pair.second.total();
-			
-				if(pair.second.busted())
-				{
-					return PlayerBust;
-				}
-				if(dealerTotal > playerTotal)
-				{
-					return PlayerLose;
-				}
-				else if(dealerTotal == playerTotal)
-				{
-					return Push;
-				}
-				else
-				{
-					return PlayerWin;
-				}
-			}
-			
-			return NotEnded;
-		}
 	}
 	
-private:	
+private:
 	static const bool busted(const std::vector<Card> &cards)
 	{
 		return total(cards) > 21;
@@ -606,28 +666,27 @@ private:
 	
 	static const unsigned int total(const std::vector<Card> &hand)
 	{
+		unsigned int aceCount = 0;
 		unsigned int total = 0;
 		
 		for(const Card &card : hand)
-		{
-			unsigned int aceCount = 0;
-			
-			if(card.GetFace() != Card::Ace)
-			{
-				total += card.GetValue();
-			}
-			else
+		{	
+			if(card.GetFace() == Card::Ace)
 			{
 				aceCount++;
 				total += 11;
 			}
-			
-			// turn aces into ones to avoid going bust
-			while(total > 21 && aceCount > 0)
+			else
 			{
-				total -= 10;
-				aceCount--;
-			}
+				total += card.GetValue();
+			}			
+		}
+		
+		// turn aces into ones to avoid going bust
+		while(total > 21 && aceCount > 0)
+		{
+			total -= 10;
+			aceCount--;
 		}
 		
 		return total;
@@ -643,44 +702,33 @@ int main(int argc, char *argv[])
 {
 	BlackJack blackJack(10);
 	blackJack.addPlayer();
-	BlackJack::Table table = blackJack.deal();
 	
-	try
+	BlackJack::Table table = blackJack.deal();	
+	
+	if(!table.hasEnded())
 	{
-		const BlackJack::Player &playerOne = table[0];
-		printf("Total is %u\n", playerOne.total());
-	
+		BlackJack::Player &playerOne = table[0];	
 		const BlackJack::Dealer &dealer = table.dealer();
+
+		BlackJack::printHand("Dealer is showing\n", dealer.Hand());
 		
 		while(!playerOne.busted())
-		{
-			printf("Dealer is showing\n");
-			for(const Card &card : dealer.Hand())
-			{
-				card.Print();
-				printf("\n");
-			}
-			printf("\n");
-		
-			printf("\nPlayer is showing\n");
-			for(const Card &card : playerOne.Hand())
-			{
-				card.Print();
-				printf("\n");
-			}
-			printf("for a total of %u.\n", playerOne.total());
-		
+		{	
+			BlackJack::printHand("\nPlayer is showing\n", playerOne.Hand());	
 			printf("\nPlayer %s with a total of %u which is %s\n", (playerOne.busted() ? "busted!" : "did not bust"),
-																   playerOne.total(),
+																   playerOne.showingTotal(),
 																   (playerOne.hasBlackJack() ? "BlackJack!" : "not BlackJack."));
-			if(playerOne.total() < 17)
+			const unsigned int dealerTotal = dealer.showingTotal();
+			const unsigned int playerTotal = playerOne.showingTotal();
+			
+			if((playerTotal < dealerTotal || dealerTotal == 10) && playerTotal < 17)
 			{
 				playerOne.hit();
 				printf("Player hits!\n");
 			}
 			else if(playerOne.busted())
 			{
-				printf("Player busted!\n");
+				printf("Player busted :-(\n");
 				break;
 			}
 			else
@@ -689,31 +737,15 @@ int main(int argc, char *argv[])
 				break;
 			}
 		}
-	
-		if(!playerOne.busted())
-		{	
-			while(dealer.total() < 16)
-			{
-				dealer.hit();
-				printf("Dealer hits!\n");
-				
-				printf("Dealer is showing\n");
-				for(const Card &card : dealer.Hand())
-				{
-					card.Print();
-					printf("\n");
-				}
-				printf("\n");
-			}
+		
+		if(playerOne.busted())
+		{
+			printf("Player busted :-(\n");
 		}
-
-		BlackJack::Ending end = blackJack.endGame(table);
-		BlackJack::PrintEnding(end);
 	}
-	catch(BlackJack::Ending prematureEnd)
-	{
-		BlackJack::PrintEnding(prematureEnd);
-	}
+	
+	const BlackJack::GameEnd *end = blackJack.endGame(table);
+	end->printEnding();
 	
 	return 0;
 }
