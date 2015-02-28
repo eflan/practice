@@ -1,1 +1,5 @@
 1. Design the data structures for a generic deck of cards. Explain how you would subclass the data structures to implement Blackjack.
+2. Three levels of employees, respondent, manager, director. Incoming phone call allocated to first respondent who is free. If there is no free respondent then the call is escalated to a manager, if no manager is free then the call is escalated to a director. Implement a method dispathCall() to assign a call to the first available employee.
+3. Design a musical jukebox using object oriented principals.
+4. Design a parking lot using object oriented principles.
+5. Design the data structures for an online book reader system.
