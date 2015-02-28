@@ -1,7 +1,7 @@
 CC=g++
-CFLAGS=-Wall -std=c++11 -c
+CFLAGS=-Wall -std=c++11
 LFLAGS=-Wall -std=c++11
-SOURCES=BlackJack.cpp CallCenter.cpp ObjectOrientedDesign.cpp
+SOURCES=BlackJack.cpp CallCenter.cpp ObjectOrientedDesign.cpp Jukebox.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=ObjectOrientedDesign
 
@@ -10,8 +10,8 @@ all: $(SOURCES) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) 
 	$(CC) $(LFLAGS) $(OBJECTS) -o $@
 
-$(OBJECTS): $(SOURCES)
-	$(CC) $(CFLAGS) $(SOURCES)
+%.o: %.cpp
+	$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm *.o ObjectOrientedDesign

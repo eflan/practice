@@ -148,15 +148,18 @@ void CallCenter()
 	catch(const char *const exceptionMessage)
 	{
 		exceptionCaught = true;
-
-		if(countCalls != 1110)
-		{
-			printf("Director escalated to prematurely!\n");
-		}
 	}
 
 	if(!exceptionCaught)
 	{
 		printf("Director was not assigned a call while busy. Something went wrong!\n");
+	}
+	else if(countCalls != 1110)
+	{
+		printf("Director escalated to prematurely!\n");
+	}
+	else
+	{
+		printf("Call center simulation succesful.\n");
 	}
 }

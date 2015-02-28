@@ -117,8 +117,7 @@ public:
 	void shuffle()
 	{
 		_top = 0;
-		srand(time(NULL));
-		
+				
 		// Swap each card with another card at a random position.
 		for(unsigned int i = 0; i < NumCards; i++)
 		{
@@ -726,6 +725,8 @@ private:
 
 void PlayBlackJack()
 {
+	srand(time(NULL));
+
 	BlackJack blackJack(10);
 	blackJack.addPlayer();
 	
