@@ -14,4 +14,4 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm *.o ObjectOrientedDesign
+	rm $(OBJECTS) $(EXECUTABLE)
