@@ -1,41 +1,41 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <vector>
 
 class ParkingLot;
 
-class Renderable
+class Vehicle
 {
 public:
-	Renderable(const size_t width)
-		: _width(width)
+	Vehicle(const char icon, const unsigned int size)
+		: _icon(icon),
+		  _size(size)
 	{
 	}
+
+	const char icon() const { return _icon; }
 	
-	const size_t width() const
-	{
-		return _width;
-	}
+	void park(ParkingLot &lot);
+	void leave(ParkingLot &lot);
+
+	const unsigned int size() const { return _size; }
+	const bool isParked() const { return _spaces.size() != 0; }
 	
-	virtual const char icon(const size_t x) const = 0;
+protected:
+	char _icon;
+	unsigned int _row;
+	std::vector<unsigned int> _spaces;
 
 private:
-	size_t _width;
+	unsigned int _size;
 };
 
-class Vehicle : public Renderable
-{
-public:
-	Vehicle(const size_t w) : Renderable(w) {}
-	
-	virtual void park(ParkingLot &lot) = 0;	
-};
-
-class ParkingSpace : public Renderable
+class ParkingSpace
 {
 public:
 	ParkingSpace()
-		: Renderable(1),
-		  _occupied(nullptr)
+		: _occupied(nullptr)
 	{
 	}
 	
@@ -44,137 +44,237 @@ public:
 		_occupied = parked;
 	}
 	
-	const bool occupied(const Vehicle **occupant) const
+	void leave()
 	{
-		*occupant = _occupied;
-		return _occupied != nullptr;
+		_occupied = nullptr;
 	}
 	
-	virtual const char icon(const size_t x) const
+	const bool occupied(Vehicle **occupant) const
 	{
-		if(_occupied == nullptr)
-		{
-			return '=';
-		}
-		else
-		{
-			return _occupied->icon(x);
-		}
+		*occupant = _occupied;
+		return !isFree();
+	}
+	
+	const bool isFree() const
+	{
+		return _occupied == nullptr;
 	}
 	
 private:
 	Vehicle *_occupied;
 };
 
-class Lane : public Renderable
-{
-public:
-	Lane()
-		: Renderable(2),
-		  _left(nullptr),
-		  _right(nullptr)
-	{
-	}
-
-	virtual const char icon(const size_t x) const
-	{
-		if(x == 0)
-		{
-			return iconFor(x, _left);
-		}
-		else
-		{
-			return iconFor(x, _right);
-		}
-	}
-	
-private:
-	const char iconFor(const size_t x, Vehicle *v) const
-	{
-		if(v == nullptr)
-		{
-			return '.';
-		}
-		else
-		{
-			return v->icon(x);
-		}
-	}
-	
-	Vehicle *_left;
-	Vehicle *_right;
-};
-
 class ParkingLot
 {
 public:
-	ParkingLot(size_t width, size_t height)
-		: _stalls(width),
-		  _lanes(width - 1)
+	ParkingLot(const unsigned int rows, const unsigned int stallsPerRow)
+		: _rowCount(rows),
+		  _stallsPerRow(stallsPerRow),
+		  _stalls(rows),
+		  _startSearchRow(0),
+		  _startSearchSpace(rows)
 	{
-		for(size_t i = 0; i < width; i++)
+		for(unsigned int i = 0; i < rows; i++)
 		{
-			_stalls[i] = std::vector<ParkingSpace>(height);
-			if(i != (width - 1))
+			_stalls[i] = std::vector<ParkingSpace>(stallsPerRow);
+			_startSearchSpace[i] = 0;
+		}
+	}
+	
+	const bool findSpace(const unsigned int size, unsigned int *row, std::vector<unsigned int> &spaces)
+	{
+		const unsigned int iStart = _startSearchRow;
+		bool iFirstLoop = true;
+
+		for(unsigned int i = iStart; iFirstLoop || (i != iStart); i = (i + 1) % _rowCount)
+		{
+			iFirstLoop = false;
+			
+			const unsigned int kStart = _startSearchSpace[i];
+			bool kFirstLoop = true;
+
+			for(unsigned int k = kStart; kFirstLoop || (k != kStart); k = (k + 1) % _stallsPerRow)
 			{
-				_lanes[i] = std::vector<Lane>(height);
+				kFirstLoop = false;
+
+				if(fits(_stalls[i], k, size))
+				{
+					rememberWhereToStartSearch(i, k);
+					
+					*row = i;
+					
+					const unsigned int endSpace = k + size;
+					for(unsigned int spot = k; spot < endSpace; spot++)
+					{
+						spaces.push_back(spot);
+					}
+
+					return true;
+				}
+			}
+		} 
+		
+		return false;
+	}
+	
+	void park(Vehicle *vehicle, const unsigned int row, const std::vector<unsigned int> &spaces)
+	{
+		for(unsigned int spot: spaces)
+		{
+			if(!_stalls[row][spot].isFree())
+			{
+				throw "Vehicle attempted to park in occupied parking space!";
+			}
+			else
+			{
+				_stalls[row][spot].park(vehicle);
 			}
 		}
 	}
 	
-	void render() const
+	void leave(Vehicle *vehicle, const unsigned int row, const std::vector<unsigned int> &spaces)
 	{
-		const size_t width = _stalls.size();
-		const size_t height = _stalls[0].size();
-		
-		for(size_t k = 0; k < height; k++)
-		{			
-			for(size_t i = 0; i < width; i++)
-			{
-				render(_stalls[i][k]);
+		for(unsigned int spot: spaces)
+		{
+			Vehicle *parkedVehicle = nullptr;
 			
-				if(i != (width - 1))
-				{
-					render(_lanes[i][k]);
-				}
+			if(!_stalls[row][spot].occupied(&parkedVehicle))
+			{
+				throw "Vehicle attempting to leave unoccupied parking space!";
+			}
+			else if(parkedVehicle != vehicle)
+			{
+				throw "Mismatched vehicle attempting to leave spot it didn't park in!";
+			}
+			else
+			{
+				_stalls[row][spot].leave();
+			}
+		}	
+	}
+	
+	void print() const
+	{		
+		printf("\n");
+		for(unsigned int i = 0; i < _rowCount; i++)
+		{
+			for(const ParkingSpace &space: _stalls[i])
+			{
+				printf("%c", icon(space));
 			}
 			printf("\n");
 		}
-		printf("\n\n");
 	}
 	
 private:
-	void render(const Renderable &obj) const
+	static const char icon(const ParkingSpace &space)
 	{
-		const size_t width = obj.width();
-		
-		for(size_t x = 0; x < width; x++)
+		Vehicle *parkedVehicle = nullptr;
+		if(space.occupied(&parkedVehicle))
 		{
-			printf("%c", obj.icon(x));
+			return parkedVehicle->icon();
+		}
+		else
+		{
+			return '_';
 		}
 	}
 	
+	static const bool fits(const std::vector<ParkingSpace> &row,
+	                       const unsigned int start,
+	                       const unsigned int size)
+	{
+		const unsigned int stallCount = row.size();
+		const unsigned int end = start + size;
+		
+		for(unsigned int i = start; i < end; i++)
+		{
+			if(i >= stallCount)
+			{
+				return false;
+			}
+			else if(!row[i].isFree())
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	void rememberWhereToStartSearch(const unsigned int row, const unsigned int col)
+	{
+		if(row != _stallsPerRow - 1)
+		{
+			_startSearchRow = row;
+		}
+		else
+		{
+			_startSearchRow = (row + 1) % _rowCount;
+		}
+
+		_startSearchSpace[row] = (col + 1) % _stallsPerRow;
+	}
+	
+	unsigned int _rowCount;
+	unsigned int _stallsPerRow;
 	std::vector<std::vector<ParkingSpace> > _stalls;
-	std::vector<std::vector<Lane> > _lanes;	
+	unsigned int _startSearchRow;
+	std::vector<unsigned int> _startSearchSpace;
 };
+
+void Vehicle::park(ParkingLot &lot)
+{	
+	if(lot.findSpace(size(), &_row, _spaces))
+	{
+		lot.park(this, _row, _spaces);
+	}
+	else
+	{
+		throw "Lot is full :-(";
+	}
+}
+
+void Vehicle::leave(ParkingLot &lot)
+{
+	lot.leave(this, _row, _spaces);
+	
+	_row = 0;
+	_spaces.clear();
+}
 
 class Car : public Vehicle
 {
 public:
-	Car() : Vehicle(1) {}
-
-	virtual const char icon(const size_t x) const
-	{
-		return 'c';
-	}
-	
-	virtual void park(ParkingLot &lot)
-	{
-	}
+	Car() : Vehicle('c', 1) {}
 };
 
 void SimulateParkingLot()
 {
+	srand(time(NULL));
 	ParkingLot lot(5, 20);
-	lot.render();
+	std::vector<Car> testCars(100);
+	
+	for(unsigned int i = 0; i < 1000; i++)
+	{
+		Car *randomCar = &(testCars[rand() % testCars.size()]);
+		
+		try
+		{
+			if(randomCar->isParked())
+			{
+				randomCar->leave(lot);
+			}
+			else
+			{
+				randomCar->park(lot);
+			}
+		}
+		catch(const char *const exceptionMessage)
+		{
+			printf("Car %u threw exception -- \"%s\"\n", i, exceptionMessage);
+		}
+	}
+	
+	lot.print();
 }
