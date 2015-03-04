@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-Wall -std=c++11
 LFLAGS=-Wall -std=c++11
-SOURCES=BlackJack.cpp CallCenter.cpp ObjectOrientedDesign.cpp Jukebox.cpp ParkingLot.cpp
+SOURCES=BlackJack.cpp CallCenter.cpp ObjectOrientedDesign.cpp Jukebox.cpp ParkingLot.cpp ereader.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=ObjectOrientedDesign
 
