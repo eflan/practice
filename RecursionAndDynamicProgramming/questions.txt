@@ -1,0 +1,1 @@
+1. Staircase with n steps. You can take 1, 2, or 3 steps at a time. Calculate the number of possible combinations of steps to reach the top of the steps (without going past the top step).
