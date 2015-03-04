@@ -5,6 +5,7 @@ void CallCenter();
 void SimulateJukebox();
 void SimulateParkingLot();
 void SimulateEReader();
+void HashtableTest();
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +18,8 @@ int main(int argc, char *argv[])
 	SimulateParkingLot();
 	printf("\n-------------------------------------------------------\n");
 	SimulateEReader();
+	printf("\n-------------------------------------------------------\n");
+	HashtableTest();
 
 	return 0;
 }
