@@ -3,3 +3,8 @@
 3. Design a musical jukebox using object oriented principals.
 4. Design a parking lot using object oriented principles.
 5. Design the data structures for an online book reader system.
+6.
+7.
+8.
+9.
+10. Design and implement a hashtable that uses chaining to handle collisions.
