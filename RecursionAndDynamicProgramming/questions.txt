@@ -1,1 +1,11 @@
 1. Staircase with n steps. You can take 1, 2, or 3 steps at a time. Calculate the number of possible combinations of steps to reach the top of the steps (without going past the top step).
+2. Imagine a robot on an X/Y plane with 0,0 being the top left corner. Robot can only move right and down. Calculate possible paths from (0,0) to (X,Y). FOLLOWUP Imagine certain spots are off limits. Design an algorithm to find a path from (0,0) to (X,Y).
+3. A magic index in an array A[0...n-1] is an index i such that A[i] == i. Given an array of sorted integers design an algorithm to find a magic index in an array, if one exists. FOLLOWUP what if the values in the array are not distinct?
+4. Write a method to return all subsets of a set.
+5. Write a method to compute all permutations of a string of uniqu characters.
+6. Write a method to display all properly open and closed combinations of N pairs of parentheses. EXAMPLE Input: 3, Output: ((())), (()()), (())(), ()(()), ()()().
+7. Implement the "paint fill" algorithm that you see in many paint programs. That is, given an two dimensional array of pixels, a point, and a new color, change that pixel and all pixels connected to it via left/right/up/down to the new color.
+8. Given an infinite supply of quarters (0.25), dimes (0.10), nickels (0.05), and pennies (0.01), write code to calculate the number of ways of representing n cents.
+9. Write an algorithm to print all possible ways to arrange 8 queens on an 8x8  chess board such that no two queens are attacking each other.
+10. You have N boxes with dimensions width x height x depth. A box cannot be rotated and cannot be placed on top of another box unless it is strictly larger than the box below it in all dimensions. Design an algorithm to calculate the tallest stack possible where the height of the stack is the sum of the heights of each box in the stack.
+11. Given a boolean expression consisting of the symbols 0, 1, &, |, ^, and a desired boolean result R, print the number of ways you can parenthesize the expression such that it evaluates to R. EXAMPLE Input: 1^0|0|1, 0 Output: 1^((0|0)|1), 1^(0|(0|1)). 

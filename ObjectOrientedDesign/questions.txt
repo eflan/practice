@@ -3,8 +3,8 @@
 3. Design a musical jukebox using object oriented principals.
 4. Design a parking lot using object oriented principles.
 5. Design the data structures for an online book reader system.
-6.
-7.
-8.
-9.
+6. Implement a jigsaw puzzle and solver. You can assume that a bool fitsWith(...) method that takes to puzzle pieces as arguments is supplied.
+7. Design a chat server including various backend components, classes, and methods. What would the hardest problems be?
+8. Design an Othello game. Othello rules are as follows -- Two players, place one piece a turn, capture piece by surrounding it on left/right or top/bottom, once surrounded a piece flips to capturing player, player must capture opponent's piece if possible,game ends when player cannot make any more moves. Player with most pieces wins.
+9. Design an in memory file system.
 10. Design and implement a hashtable that uses chaining to handle collisions.
