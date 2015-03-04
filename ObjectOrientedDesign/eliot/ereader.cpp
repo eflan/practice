@@ -28,17 +28,118 @@ private:
 };
 
 //
-// Interface that defines all interactions with a Book
+// Holds all the details of a book
 //
-class Book
+class BookDetails
 {
 public:
-	virtual const std::string &title() const = 0;
-	virtual const std::vector<std::string> &authors() const = 0;	
-	virtual const std::vector<std::string> &editors() const = 0;
-	virtual const std::string &publisher() const = 0;
-	virtual const tm &publicationDate() const = 0;
-	virtual const std::vector<std::string> &keywords() const = 0;
+	BookDetails()
+		: _title(),
+		  _authors(),
+		  _editors(),
+		  _publisher(),
+		  _published(),
+		  _keywords()
+	{
+	}
+	
+	BookDetails(const std::string &bookTitle,
+				const std::vector<std::string> &bookAuthors,
+				const std::vector<std::string> &bookEditors,
+				const std::string &bookPublisher,
+				const tm &bookPublished,
+				const std::vector<std::string> &bookKeywords)
+		: _title(bookTitle),
+		  _authors(bookAuthors),
+		  _editors(bookEditors),
+		  _publisher(bookPublisher),
+		  _published(bookPublished),
+		  _keywords(bookKeywords)
+	{
+	}
+		
+	const std::string &title() const
+	{
+		return _title;
+	}
+	
+	const std::vector<std::string> &authors() const
+	{
+		return _authors;
+	}
+	
+	const std::vector<std::string> &editors() const
+	{
+		return _editors;
+	}
+	
+	const std::string &publisher() const
+	{
+		return _publisher;
+	}
+	
+	const tm &publicationDate() const
+	{
+		return _published;
+	}
+	
+	const std::vector<std::string> &keywords() const
+	{
+		return _keywords;
+	}
+	
+protected:
+	void copyDetails(const BookDetails &copy)
+	{
+		_title = copy._title;
+		_authors = copy._authors;
+		_editors = copy._editors;
+		_publisher = copy._publisher;
+		_published = copy._published;
+		_keywords = copy._keywords;
+	}
+
+	std::string _title;
+	std::vector<std::string> _authors;
+	std::vector<std::string> _editors;
+	std::string _publisher;
+	tm _published;
+	std::vector<std::string> _keywords;
+};
+
+//
+// Interface that defines all interactions with a Book
+//
+class Book : public BookDetails
+{
+public:
+	Book() : BookDetails() {}
+	
+	Book(const std::string &bookTitle,
+	 	 const std::vector<std::string> &bookAuthors,
+		 const std::vector<std::string> &bookEditors,
+		 const std::string &bookPublisher,
+		 const tm &bookPublished,
+		 const std::vector<std::string> &bookKeywords)
+		: BookDetails(bookTitle,
+					  bookAuthors,
+					  bookEditors,
+					  bookPublisher,
+					  bookPublished,
+					  bookKeywords)
+	{
+	}
+
+	Book(const Book &copy)
+		: BookDetails(copy.title(),
+					  copy.authors(),
+					  copy.editors(),
+					  copy.publisher(),
+					  copy.publicationDate(),
+					  copy.keywords())
+	{
+	}
+	
 	virtual const unsigned int numPages() const = 0;
 	virtual const std::string getPage(const unsigned int pageNumber) const = 0;
 };
@@ -493,6 +594,16 @@ public:
 		}
 	}
 	
+	const size_t countBooks() const
+	{
+		return _books.size();
+	}
+	
+	const BookDetails getBookDetails(const size_t index) const
+	{
+		return _books[index];
+	}
+	
 	const Book &checkout(const UserProfile &profile, const size_t index)
 	{
 		LibraryBook &libraryBook = findLibraryBook(index);
@@ -509,52 +620,42 @@ private:
 	class LibraryBook : public Book
 	{
 	public:
-		LibraryBook(Book *book = nullptr)
-			: _book(book),
+		LibraryBook()
+			: Book(),
+			  _book(nullptr),
+			  _checkedOut(false),
+			  _checkedOutBy(0)
+		{
+		}
+
+		LibraryBook(Book *book)
+			: Book(*book),
+			  _book(book),
 			  _checkedOut(false),
 			  _checkedOutBy(0)
 		{
 		}
 		
+		LibraryBook(const LibraryBook &copy)
+			: Book(copy),
+			  _book(copy._book),
+			  _checkedOut(copy._checkedOut),
+			  _checkedOutBy(copy._checkedOutBy)
+		{
+		}
+		
+		LibraryBook &operator=(const LibraryBook &copy)
+		{
+			copyDetails(copy);
+			_book = copy._book;
+			_checkedOut = copy._checkedOut;
+			_checkedOutBy = copy._checkedOutBy;
+			return *this;
+		}
+		
 		//
 		// Book methods
 		//
-		
-		virtual const std::string &title() const
-		{
-			checkValid();
-			return _book->title();
-		}
-		
-		virtual const std::vector<std::string> &authors() const
-		{
-			checkValid();
-			return _book->authors();
-		}
-			
-		virtual const std::vector<std::string> &editors() const
-		{
-			checkValid();
-			return _book->editors();
-		}
-		
-		virtual const std::string &publisher() const
-		{
-			checkValid();
-			return _book->publisher();
-		}
-		
-		virtual const tm &publicationDate() const
-		{
-			checkValid();
-			return _book->publicationDate();
-		}
-			
-		virtual const std::vector<std::string> &keywords() const
-		{
-			checkValid();
-			return _book->keywords();
-		}
 		
 		virtual const unsigned int numPages() const
 		{
@@ -735,44 +836,14 @@ class TestBook : public Book
 {
 public:
 	TestBook()
-		: _title(randomTitle()),
-		  _authors(randomAuthors()),
-		  _editors(randomEditors()),
-		  _publisher(randomPublisher()),
-		  _published(randomDate()),
-		  _keywords(randomKeyWords()),
+		: Book(randomTitle(),
+		       randomAuthors(),
+			   randomEditors(),
+			   randomPublisher(),
+			   randomDate(),
+			   randomKeyWords()),
 		  _numPages(randomNumPages())
 	{
-	}
-	
-	virtual const std::string &title() const
-	{
-		return _title;
-	}
-	
-	virtual const std::vector<std::string> &authors() const
-	{
-		return _authors;
-	}
-	
-	virtual const std::vector<std::string> &editors() const
-	{
-		return _editors;
-	}
-	
-	virtual const std::string &publisher() const
-	{
-		return _publisher;
-	}
-	
-	virtual const tm &publicationDate() const
-	{
-		return _published;
-	}
-	
-	virtual const std::vector<std::string> &keywords() const
-	{
-		return _keywords;
 	}
 	
 	virtual const unsigned int numPages() const
@@ -860,14 +931,32 @@ private:
 		return std::string(buffer);
 	}
 	
-	std::string _title;
-	std::vector<std::string> _authors;
-	std::vector<std::string> _editors;
-	std::string _publisher;
-	tm _published;
-	std::vector<std::string> _keywords;
 	unsigned int _numPages;
 };
+
+void printDetailsList(const std::vector<std::string> &list, const char endChar)
+{
+	char trailing = ',';
+	
+	for(size_t i = 0; i < list.size(); i++)
+	{
+		if(i == list.size() - 1)
+		{
+			trailing = endChar;
+		}
+		
+		printf("%s%c ", list[i].c_str(), trailing);
+	}
+
+}
+void printDetails(const BookDetails details)
+{
+	printDetailsList(details.authors(), '.');	
+	printf("%s. ", details.title().c_str());
+	printDetailsList(details.editors(), ',');
+	printf("%u.", 1900 + details.publicationDate().tm_year);
+	printf("\n");
+}
 
 void SimulateEReader()
 {
@@ -1005,6 +1094,15 @@ void SimulateEReader()
 	}
 	
 	Library library(books);
+	
+	const size_t countBooks = library.countBooks();
+	printf("Random book #1\n");
+	printDetails(library.getBookDetails(rand() % countBooks));
+	printf("Random book #2\n");
+	printDetails(library.getBookDetails(rand() % countBooks));
+	printf("Random book #3\n");
+	printDetails(library.getBookDetails(rand() % countBooks));
+	
 	const std::vector<size_t> byAuthor = library.byAuthor(testBooks[0].authors()[0]);
 	for(const size_t index : byAuthor)
 	{
