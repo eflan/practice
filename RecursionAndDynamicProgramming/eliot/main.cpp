@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include <vector>
 #include <unordered_map>
+#include <list>
 
 void PlayBeatTheDealer();
 
@@ -75,8 +76,199 @@ const uint64_t countStepCombosMemoized(const uint64_t steps, uint64_t &hits, std
 	return total;
 }
 
+
+class Coordinate
+{
+public:
+	Coordinate(size_t x = 0, size_t y = 0) : _x(x), _y(y) {}
+	Coordinate(const Coordinate &copy) : _x(copy.X()), _y(copy.Y()) {}
+	
+	const size_t X() const { return _x; }
+	const size_t Y() const { return _y; }
+	
+private:
+	size_t _x;
+	size_t _y;
+};
+
+typedef std::list<Coordinate> Path;
+
+const bool pathContains(const size_t x, const size_t y, const Path &path)
+{
+	for(const Coordinate &pos : path)
+	{
+		if(pos.X() == x && pos.Y() == y)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+class Offlimits
+{
+public:
+	virtual const bool operator()(const Coordinate &position) const = 0;
+};
+
+void printPath(const size_t width, const size_t height, const Path &path, const Offlimits &off)
+{
+	for(size_t i = 0; i < height; i++)
+	{
+		for(size_t k = 0; k < width; k++)
+		{
+			if(pathContains(k, i, path))
+			{
+				printf("r");
+			}
+			else if(off(Coordinate(k, i)))
+			{
+				printf("x");
+			}
+			else
+			{
+				printf(".");
+			}
+		}
+		printf("\n");
+	}
+}
+
+const bool robotLastMoveWasRight(const Path &progress)
+{
+	const size_t length = progress.size();
+	if(length > 1)
+	{
+		auto it = progress.begin();
+		for(size_t i = 0; i < length - 2; i++)
+		{
+			it++;
+		}
+
+		return progress.back().Y() == it->Y() && progress.back().X() == (it->X() + 1);
+	}
+	else
+	{
+		return false;
+	}
+}
+
+Path robotPath(const Offlimits &off, size_t width, size_t height, const Path &progress)
+{
+	Coordinate position = progress.back();
+	if(position.X() == (width - 1) && position.Y() == (height - 1))
+	{
+		return progress;
+	}
+	else
+	{		
+		Coordinate right(position.X() + 1, position.Y());
+		Coordinate down(position.X(), position.Y() + 1);
+		Coordinate moves[2];
+
+		if(robotLastMoveWasRight(progress))
+		{
+			moves[0] = down;
+			moves[1] = right;
+		}
+		else
+		{
+			moves[0] = right;
+			moves[1] = down;
+		}
+		
+		for(size_t i = 0; i < 2; i++)
+		{
+			if(moves[i].X() < width && moves[i].Y() < height && !off(moves[i]))
+			{	
+				Path go(progress);
+				go.push_back(moves[i]);
+				Path p = robotPath(off, width, height, go);
+				if(!p.empty())
+				{
+					return p;
+				}
+			}
+		}
+				
+		return Path();
+	}
+}
+
+Path robotPath(const Offlimits &off, size_t width, size_t height)
+{
+	Path start;
+	start.push_back(Coordinate(0, 0));
+	return robotPath(off, width, height, start);
+}
+
+typedef std::vector<std::vector<bool> > RobotMap;
+
+RobotMap makeRobotMap(const size_t width, const size_t height)
+{
+	RobotMap map;
+	for(size_t i = 0; i < height; i++)
+	{
+		std::vector<bool> row;
+		for(size_t k = 0; k < width; k++)
+		{
+			// 10% impassable terrain except at the top left corner
+			row.push_back((!(i == 0 && k == 0)) && (rand() % 10) == 1);
+		}
+		
+		map.push_back(row);
+	}
+	
+	return map;
+}
+
+void printMap(const RobotMap &map)
+{
+	const size_t height = map.size();
+	for(size_t i = 0; i < height; i++)
+	{
+		for(size_t k = 0; k < map[i].size(); k++)
+		{
+			if(map[i][k])
+			{
+				printf("1");
+			}
+			else
+			{
+				printf("0");
+			}
+		}
+		printf("\n");
+	}
+}
+
+class OfflimitsMap : public Offlimits
+{
+public:
+	OfflimitsMap(const RobotMap &map)
+		: _impassable(map)
+	{
+	}
+	
+	const bool operator()(const Coordinate &position) const
+	{
+		return _impassable[position.Y()][position.X()];
+	}
+	
+	void print() const
+	{
+		printMap(_impassable);
+	}
+	
+private:
+	RobotMap _impassable;
+};
+
 int main(int argc, char *argv[])
 {
+	srand(time(NULL));
+	
 	PlayBeatTheDealer();
 	
 	std::vector<uint64_t> path;
@@ -98,5 +290,9 @@ int main(int argc, char *argv[])
 	const uint64_t solutionCount = countStepCombosMemoized(100UL, hits, memoizer);
 	printf("\n\n%lu cobminations for %lu steps (%lu memoizer hits)\n", solutionCount, 100UL, hits);
 	
+	OfflimitsMap offLimits(makeRobotMap(10, 10));
+	printf("\nRobot path = \n");
+	Path robot = robotPath(offLimits, 10, 10);
+	printPath(10, 10, robot, offLimits);
 	return 0;
 }
