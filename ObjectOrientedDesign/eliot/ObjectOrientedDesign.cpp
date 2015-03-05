@@ -6,9 +6,11 @@ void SimulateJukebox();
 void SimulateParkingLot();
 void SimulateEReader();
 void HashtableTest();
+void JigsawPuzzleTest();
 
 int main(int argc, char *argv[])
 {
+	/*
 	PlayBlackJack();
 	printf("\n-------------------------------------------------------\n");
 	CallCenter();
@@ -20,6 +22,9 @@ int main(int argc, char *argv[])
 	SimulateEReader();
 	printf("\n-------------------------------------------------------\n");
 	HashtableTest();
+	printf("\n-------------------------------------------------------\n");
+	*/
+	JigsawPuzzleTest();
 
 	return 0;
 }
