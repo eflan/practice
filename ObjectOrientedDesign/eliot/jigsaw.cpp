@@ -22,14 +22,14 @@ public:
 	{
 	}
 	
-	ImmutableList<T> append(const T &element) const
+	const ImmutableList<T> append(const T &element) const
 	{
 		std::list<T> copy(_list);
 		copy.push_back(element);
 		return ImmutableList<T>(copy);
 	}
 	
-	ImmutableList<T> remove(const T &element) const
+	const ImmutableList<T> remove(const T &element) const
 	{
 		std::list<T> copy(_list);
 
@@ -44,7 +44,7 @@ public:
 		return ImmutableList<T>(copy);
 	}
 	
-	ImmutableList<T> append(const ImmutableList<T> &other) const
+	const ImmutableList<T> append(const ImmutableList<T> &other) const
 	{
 		std::list<T> copy(_list);
 		copy.insert(copy.end(), other._list.begin(), other._list.end());
@@ -52,7 +52,7 @@ public:
 	}
 	
 	template<typename Predicate>
-	std::pair<ImmutableList<T>, ImmutableList<T> > split(Predicate test) const
+	const std::pair<ImmutableList<T>, ImmutableList<T> > split(Predicate test) const
 	{
 		std::list<T> passed;
 		std::list<T> failed;
@@ -73,7 +73,7 @@ public:
 	}
 	
 	template<typename Predicate>
-	ImmutableList<T> filter(Predicate test) const
+	const ImmutableList<T> filter(Predicate test) const
 	{
 		auto splitLists = split(test);
 		return splitLists.first;
@@ -84,7 +84,7 @@ public:
 		return _list.front();
 	}
 	
-	ImmutableList<T> tail() const
+	const ImmutableList<T> tail() const
 	{
 		auto it = _list.begin();
 		it++;
@@ -174,17 +174,17 @@ public:
 		}
 	}
 	
-	bool fits(const JigsawSide &other) const
+	const bool fits(const JigsawSide &other) const
 	{
 		return *this == other.opposite();
 	}
 	
-	bool operator==(const JigsawSide &other) const
+	const bool operator==(const JigsawSide &other) const
 	{
 		return side() == other.side() && shape() == other.shape();
 	}
 	
-	bool operator!=(const JigsawSide &other) const
+	const bool operator!=(const JigsawSide &other) const
 	{
 		return !(*this == other);
 	}
@@ -247,7 +247,7 @@ public:
 	const JigsawSide &top() const { return _top; }
 	const JigsawSide &bottom() const { return _bottom; }
 	
-	bool operator==(const JigsawPiece &other) const
+	const bool operator==(const JigsawPiece &other) const
 	{
 		return label() == other.label() &&
 		       left() == other.left() &&
@@ -256,7 +256,7 @@ public:
 		       bottom() == other.bottom();
 	}
 	
-	bool operator!=(const JigsawPiece &other) const
+	const bool operator!=(const JigsawPiece &other) const
 	{
 		return !(*this == other);
 	}
@@ -295,39 +295,6 @@ void printJigsawList(const JigsawList &list)
 	printf(")\n");
 }
 
-JigsawList makeTopRow(const JigsawPiece &left, const JigsawList rest)
-{
-	if(rest.isEmpty())
-	{
-		return rest;
-	}
-	else
-	{
-		auto matchesAndOthers = rest.split([left](const JigsawPiece &p){ return p.left().fits(left.right()); });
-		if(matchesAndOthers.first.isEmpty())
-		{
-			return matchesAndOthers.first;
-		}
-		else
-		{
-			JigsawList matches = matchesAndOthers.first;
-			
-			while(!matches.isEmpty())
-			{
-				JigsawPiece possibility = matches.head();
-				matches = matches.tail();
-				JigsawList row = makeTopRow(possibility, rest - possibility);
-				if(row.length() == rest.length() - 1)
-				{
-					return JigsawList(possibility) + row;
-				}
-			}
-			
-			return JigsawList();
-		}
-	}
-}
-
 class PieceConstraint
 {
 public:
@@ -335,7 +302,6 @@ public:
 		: _left(left),
 		  _top(top)
 	{
-		printf("Constraint[%s, %s]\n", left.toString(), top.toString());
 	}
 	
 	const bool operator()(const JigsawPiece &piece) const
@@ -398,12 +364,15 @@ public:
 		return _rows.isEmpty() || _rows.head().isEmpty();
 	}
 	
-	static JigsawPuzzle solve(const JigsawPuzzle &progress, const JigsawList &piecesRemaining)
+	static const JigsawPuzzle solve(const JigsawPuzzle &progress, const JigsawList &piecesRemaining, const bool verbose = false)
 	{
-		printf("Progress\n");
-		progress.print();
-		printf("Pieces remaining\n");
-		printJigsawList(piecesRemaining);
+		if(verbose)
+		{
+			printf("Progress\n");
+			progress.print();
+			printf("Pieces remaining\n");
+			printJigsawList(piecesRemaining);
+		}
 		
 		if(piecesRemaining.isEmpty())
 		{
@@ -411,15 +380,23 @@ public:
 		}
 		else
 		{
-			JigsawList possibilities = piecesRemaining.filter(progress.constraint());
-			printf("Possibilities = ");
-			printJigsawList(possibilities);
+			const JigsawList possibilities = piecesRemaining.filter(progress.constraint());
+			
+			if(verbose)
+			{
+				printf("\nPossibilities = ");
+				printJigsawList(possibilities);
+			}
 			
 			const size_t possibilitiesLength = possibilities.length();
 			for(size_t i = 0; i < possibilitiesLength; i++)
 			{
-				printf("Trying piece %u\n", possibilities[i].label());
-				JigsawPuzzle solution = solve(progress + possibilities[i], piecesRemaining - possibilities[i]);
+				if(verbose)
+				{
+					printf("Trying piece %u\n\n", possibilities[i].label());
+				}
+				
+				const JigsawPuzzle solution = solve(progress + possibilities[i], piecesRemaining - possibilities[i], verbose);
 				if(!solution.isEmpty())
 				{
 					return solution;
@@ -440,7 +417,7 @@ private:
 		}
 	}
 	
-	static 	ImmutableList<JigsawList> addPiece(const ImmutableList<JigsawList> &rows, const JigsawPiece &piece)
+	static const ImmutableList<JigsawList> addPiece(const ImmutableList<JigsawList> &rows, const JigsawPiece &piece)
 	{
 		if(rows.isEmpty())
 		{
@@ -463,11 +440,10 @@ private:
 		}
 	}
 	
-	static PieceConstraint constraintFromRows(const ImmutableList<JigsawList> &rows)
+	static const PieceConstraint constraintFromRows(const ImmutableList<JigsawList> &rows)
 	{
 		if(rows.length() == 0)
 		{
-			printf("Top left constraint\n");
 			// empty puzzle solution implies we are looking for the top left corner piece
 			return PieceConstraint(JigsawSide(Side::Smooth), JigsawSide(Side::Smooth));
 		}
@@ -491,8 +467,8 @@ private:
 		}
 	}
 	
-	static JigsawSide topConstraint(const ImmutableList<JigsawList> &rows,
-	                                const size_t bottomRowIndex)
+	static const JigsawSide topConstraint(const ImmutableList<JigsawList> &rows,
+	                                      const size_t bottomRowIndex)
 	{
 		const size_t numRows = rows.length();
 	
@@ -524,45 +500,45 @@ private:
 void JigsawPuzzleTest()
 {
 	/**
-	 * ---------------
-	 * |   ||   ||   |
-	 * | 0 >> 1 << 2 |
-	 * |   ||   ||   |
-	 * --^ ---v----^--
-	 * --^----v----^--
-	 * |   ||   ||   |   
-	 * | 3 >> 4 >> 5 |
-	 * |   ||   ||   |
-	 * --v----v----^--
-	 * --v----v----^--
-	 * |   ||   ||   |
-	 * | 6 << 7 << 8 |
-	 * |   ||   ||   |
-	 * ---------------
+	 * --------------------
+	 * |   ||   ||   ||   |
+	 * | 0 >> 1 << 2 << 3 |
+	 * |   ||   ||   ||   |
+	 * --^ ---V----V----^--
+	 * --^----V----V----^--
+	 * |   ||   ||   ||   |
+	 * | 4 >> 5 >> 6 >> 7 |
+	 * |   ||   ||   ||   |
+	 * --V----V----V----V--
+	 * --V----V----V----V--
+	 * |   ||   ||   ||   | 
+	 * | 8 << 9 << 10<< 11|
+	 * |   ||   ||   ||   |
+	 * --------------------
 	 **/
 	 
 	std::list<JigsawPiece> piecesList;
-
-	printf("Creating list of pieces\n");
 	 
+	piecesList.push_back(JigsawPiece(4, JigsawSide(Side::Smooth), JigsawSide(Side::Out), JigsawSide(Side::Out), JigsawSide(Side::Out)));
+	piecesList.push_back(JigsawPiece(8, JigsawSide(Side::Smooth), JigsawSide(Side::In), JigsawSide(Side::In), JigsawSide(Side::Smooth)));
+	piecesList.push_back(JigsawPiece(6, JigsawSide(Side::In), JigsawSide(Side::Out), JigsawSide(Side::In), JigsawSide(Side::Out)));
+	piecesList.push_back(JigsawPiece(2, JigsawSide(Side::Out), JigsawSide(Side::In), JigsawSide(Side::Smooth), JigsawSide(Side::Out)));
+	piecesList.push_back(JigsawPiece(3, JigsawSide(Side::Out), JigsawSide(Side::Smooth), JigsawSide(Side::Smooth), JigsawSide(Side::In)));	
 	piecesList.push_back(JigsawPiece(0, JigsawSide(Side::Smooth), JigsawSide(Side::Out), JigsawSide(Side::Smooth), JigsawSide(Side::In)));
 	piecesList.push_back(JigsawPiece(1, JigsawSide(Side::In), JigsawSide(Side::In), JigsawSide(Side::Smooth), JigsawSide(Side::Out)));
-	piecesList.push_back(JigsawPiece(2, JigsawSide(Side::Out), JigsawSide(Side::Smooth), JigsawSide(Side::Smooth), JigsawSide(Side::In)));
-	piecesList.push_back(JigsawPiece(3, JigsawSide(Side::Smooth), JigsawSide(Side::Out), JigsawSide(Side::Out), JigsawSide(Side::Out)));
-	piecesList.push_back(JigsawPiece(4, JigsawSide(Side::In), JigsawSide(Side::Out), JigsawSide(Side::In), JigsawSide(Side::Out)));
-	piecesList.push_back(JigsawPiece(5, JigsawSide(Side::In), JigsawSide(Side::Smooth), JigsawSide(Side::Out), JigsawSide(Side::In)));
-	piecesList.push_back(JigsawPiece(6, JigsawSide(Side::Smooth), JigsawSide(Side::In), JigsawSide(Side::In), JigsawSide(Side::Smooth)));
-	piecesList.push_back(JigsawPiece(7, JigsawSide(Side::Out), JigsawSide(Side::In), JigsawSide(Side::In), JigsawSide(Side::Smooth)));
-	piecesList.push_back(JigsawPiece(8, JigsawSide(Side::Out), JigsawSide(Side::Smooth), JigsawSide(Side::Out), JigsawSide(Side::Smooth)));
+	piecesList.push_back(JigsawPiece(10, JigsawSide(Side::Out), JigsawSide(Side::In), JigsawSide(Side::In), JigsawSide(Side::Smooth)));
+	piecesList.push_back(JigsawPiece(5, JigsawSide(Side::In), JigsawSide(Side::Out), JigsawSide(Side::In), JigsawSide(Side::Out)));
+	piecesList.push_back(JigsawPiece(7, JigsawSide(Side::In), JigsawSide(Side::Smooth), JigsawSide(Side::Out), JigsawSide(Side::Out)));	
+	piecesList.push_back(JigsawPiece(9, JigsawSide(Side::Out), JigsawSide(Side::In), JigsawSide(Side::In), JigsawSide(Side::Smooth)));
+	piecesList.push_back(JigsawPiece(11, JigsawSide(Side::Out), JigsawSide(Side::Smooth), JigsawSide(Side::In), JigsawSide(Side::Smooth)));
+
+	const JigsawList pieces(piecesList);
+	printf("Puzzle pieces -- ");
+	printJigsawList(pieces);
 	
-	printf("Creating JigsawList of pieces\n");
-	JigsawList pieces(piecesList);
+	const JigsawPuzzle emptyPuzzle;
 	
-	printf("Constructing empty puzzle\n");
-	JigsawPuzzle emptyPuzzle;
-	
-	printf("Solving puzzle\n");
-	JigsawPuzzle solution = JigsawPuzzle::solve(emptyPuzzle, pieces);
-	printf("Done.\n");
+	const JigsawPuzzle solution = JigsawPuzzle::solve(emptyPuzzle, pieces);
+	printf("\nPuzzle solution\n");
 	solution.print();
 }
