@@ -330,6 +330,139 @@ size_t magicIndex(size_t n, size_t *sorted)
 	return magicIndex(0, n, sorted);
 }
 
+template<typename T>
+class Set
+{
+public:
+	Set()
+		: _members()
+	{
+	}
+	
+	Set(const T &unary)
+		: _members()
+	{
+		_members.push_back(unary);
+	}
+	
+	Set(const Set<T> &copy)
+		: _members(copy.members())
+	{
+	}
+	
+	Set(Set<T> &&move)
+		: _members()
+	{
+		move._members.swap(_members);
+	}
+	
+	Set(const std::vector<T> &members)
+		: _members(members)
+	{
+	}
+	
+	const std::vector<T> &members() const
+	{
+		return _members;
+	}
+	
+	const Set<T> operator+(const Set<T> &rhs) const
+	{
+		std::vector<T> all(members());
+		all.insert(all.begin(), rhs.members().begin(), rhs.members().end());
+		return Set<T>(all);
+	}
+	
+	const Set<T> operator+(const T &rhs) const
+	{
+		std::vector<T> all(members());
+		all.push_back(rhs);
+		return Set<T>(all);
+	}
+	
+	const Set<T> operator-(const T&rhs) const
+	{
+		std::vector<T> all(members());
+	
+		auto it = all.begin();
+		while(it != all.end())
+		{
+			if(*it == rhs)
+			{
+				break;
+			}
+			else
+			{
+				it++;
+			}
+		}
+		
+		all.erase(it);
+		
+		return Set<T>(all);
+	}
+	
+	const size_t size() const
+	{
+		return _members.size();
+	}
+	
+	const Set<T> operator=(const Set<T> &rhs)
+	{
+		_members = rhs.members();
+		return *this;
+	}
+	
+private:
+	std::vector<T> _members;
+};
+
+template<typename T>
+Set<Set<T> > subsets(const size_t subsetSize, const Set<T> &set)
+{
+	Set<Set<T> > sets;
+	if(subsetSize == 1)
+	{
+		for(size_t element : set.members())
+		{			
+			sets = sets + Set<T>(element);
+		}
+		
+		return sets;
+	}
+	else if(subsetSize == set.size())
+	{
+		return set;
+	}
+	else
+	{
+		for(size_t element : set.members())
+		{
+			Set<Set<T> > nMinusOne = subsets(subsetSize - 1, set - element);
+			for(const Set<T> &subset : nMinusOne.members())
+			{
+				Set<T> n = subset + element;
+				sets = sets + n;
+			}
+		}
+		
+		return sets;
+	}
+}
+
+template<typename T>
+Set<Set<T> > subsets(const Set<T> &set)
+{
+	Set<Set<T> > sets;
+	
+	for(size_t size = 1; size <= set.size(); size++)
+	{
+		sets = sets + subsets(size, set);
+	}
+	
+	return sets;
+}
+
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
@@ -368,7 +501,7 @@ int main(int argc, char *argv[])
 	}
 	printf("\n");
 	
-	for(size_t size = 0; size < 10; size++)
+	for(size_t size = 0; size < 11; size++)
 	{
 		combos = parentheses(size);
 		printf("%zu parentheses have %zu balanced combinations.\n", size, combos.size());
@@ -378,11 +511,45 @@ int main(int argc, char *argv[])
 	size_t magic = magicIndex(_countof(numbers), numbers);
 	if(magic < _countof(numbers))
 	{
-		printf("numbers[%zu] == %zu\n", magic, numbers[magic]);
+		printf("\nnumbers[%zu] == %zu\n", magic, numbers[magic]);
 	}
 	else
 	{
-		printf("Array does not contain a magic index :-(\n");
+		printf("\nArray does not contain a magic index :-(\n");
 	}
+	
+	size_t noMagic[] = {1, 2, 4, 11, 12, 13, 14, 14, 14, 14, 14, 14, 14, 14 };
+	magic = magicIndex(_countof(noMagic), noMagic);
+	if(magic < _countof(noMagic))
+	{
+		printf("\nArray should not have contained a magic index!\n");
+	}
+	
+	std::vector<size_t> five;
+	five.push_back(0);
+	five.push_back(1);
+	five.push_back(2);
+	five.push_back(3);
+	five.push_back(4);
+	Set<size_t> setOfFive(five);
+	Set<Set<size_t> > subs = subsets(setOfFive);
+	printf("\nSubsets of ");
+	printf("(");
+	for(const size_t &element : five)
+	{
+		printf("%zu, ", element);
+	}
+	printf(") --\n\n");
+	
+	for(const Set<size_t> &set : subs.members())
+	{
+		printf("(");
+		for(const size_t &element : set.members())
+		{
+			printf("%zu, ", element);
+		}
+		printf(")\n");
+	}
+	
 	return 0;
 }
