@@ -463,6 +463,39 @@ Set<Set<T> > subsets(const Set<T> &set)
 	return sets;
 }
 
+std::vector<std::string> permutations(const std::string &str)
+{
+	std::vector<std::string> perms;
+
+	if(str.size() == 0)
+	{
+		// Permutations is an empty set
+	}
+	else if(str.size() == 1)
+	{
+		perms.push_back(str);
+	}
+	else
+	{
+		for(size_t i = 0; i < str.length(); i++)
+		{
+			std::string rest(str);
+			rest.erase(i, 1);
+			std::vector<std::string> nMinusOne = permutations(rest);
+			
+			for(std::string &substr : nMinusOne)
+			{
+				std::string perm;
+				perm += str[i];
+				perm += substr;
+				perms.push_back(perm);
+			}
+		}
+	}
+	
+	return perms;
+}
+
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
@@ -550,6 +583,15 @@ int main(int argc, char *argv[])
 		}
 		printf(")\n");
 	}
+	
+	std::string str("abcd");
+	printf("\nPermutations of %s --\n", str.c_str());
+	std::vector<std::string> perms = permutations(str);
+	for(const std::string &perm : perms)
+	{
+		printf("%s\n", perm.c_str());
+	}
+	printf("\n");
 	
 	return 0;
 }
