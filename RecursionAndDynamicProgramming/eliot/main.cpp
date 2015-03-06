@@ -3,6 +3,9 @@
 #include <vector>
 #include <unordered_map>
 #include <list>
+#include <string>
+
+#define _countof(x) (sizeof(x) / sizeof(x[0]))
 
 void PlayBeatTheDealer();
 
@@ -265,6 +268,68 @@ private:
 	RobotMap _impassable;
 };
 
+std::list<std::string> parentheses(const size_t n, const size_t openCount, const size_t closedCount, const std::string &progress)
+{
+	if(closedCount == n)
+	{
+		std::list<std::string> empty;
+		empty.push_back(progress);
+		return empty;
+	}
+	
+	std::list<std::string> accum;
+	if(openCount < n)
+	{
+		std::string step(progress);
+		step += "(";
+		std::list<std::string> combos = parentheses(n, openCount + 1, closedCount, step);
+		accum.insert(accum.end(), combos.begin(), combos.end());
+	}
+	
+	if(closedCount < openCount)
+	{
+		std::string step(progress);
+		step += ")";
+		std::list<std::string> combos = parentheses(n, openCount, closedCount + 1, step);
+		accum.insert(accum.end(), combos.begin(), combos.end());
+	}
+	
+	return accum;
+}
+
+std::list<std::string> parentheses(const size_t n)
+{
+	return parentheses(n, 0, 0, std::string());
+}
+
+size_t magicIndex(size_t i, size_t n, size_t *sorted)
+{
+	if(i >= n)
+	{
+		return i;
+	}
+	else if(sorted[i] == i)
+	{
+		return i;
+	}
+	else
+	{
+		if(sorted[i] > i)
+		{
+			return magicIndex(sorted[i], n, sorted);
+		}
+		else
+		{
+			return magicIndex(i + 1, n, sorted);
+		}
+	}
+}
+
+size_t magicIndex(size_t n, size_t *sorted)
+{
+	return magicIndex(0, n, sorted);
+}
+
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
@@ -294,5 +359,30 @@ int main(int argc, char *argv[])
 	printf("\nRobot path = \n");
 	Path robot = robotPath(offLimits, 10, 10);
 	printPath(10, 10, robot, offLimits);
+	
+	printf("\nAll combinations of 3 pairs of parentheses -- ");
+	std::list<std::string> combos = parentheses(3);
+	for(std::string &str : combos)
+	{
+		printf("%s, ", str.c_str());
+	}
+	printf("\n");
+	
+	for(size_t size = 0; size < 10; size++)
+	{
+		combos = parentheses(size);
+		printf("%zu parentheses have %zu balanced combinations.\n", size, combos.size());
+	}
+	
+	size_t numbers[] = {1, 2, 4, 11, 12, 13, 14, 14, 14, 14, 14, 14, 14, 14, 14 };
+	size_t magic = magicIndex(_countof(numbers), numbers);
+	if(magic < _countof(numbers))
+	{
+		printf("numbers[%zu] == %zu\n", magic, numbers[magic]);
+	}
+	else
+	{
+		printf("Array does not contain a magic index :-(\n");
+	}
 	return 0;
 }
