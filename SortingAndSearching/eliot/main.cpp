@@ -100,6 +100,53 @@ void sortAnagramsEqual(size_t count,  const char * const *strArray)
 	qsort(const_cast<const char **>(strArray), count, sizeof(const char *const), anagramEqual);
 }
 
+bool rotatedBinarySearch(const int target, size_t count, int *array, size_t *targetIndex)
+{
+	if(count == 0)
+	{
+		return false;
+	}
+	else
+	{
+		printf("Searching %d ... %d\n", array[0], array[count - 1]);
+		size_t mid = (count - 1) / 2;
+			
+		if(array[mid] < target)
+		{
+			// try right, if that fails, try left
+			if(rotatedBinarySearch(target, count - mid, array + mid, targetIndex))
+			{
+				*targetIndex = *targetIndex + mid;
+				return true;
+			}
+			else if(rotatedBinarySearch(target, mid, array, targetIndex))
+			{
+				return true;
+			}
+		}
+		else if(array[mid] > target)
+		{
+			// try left, if that fails, try right
+			if(rotatedBinarySearch(target, mid, array, targetIndex))
+			{
+				return true;
+			}
+			else if(rotatedBinarySearch(target, count - mid, array + mid, targetIndex))
+			{
+				*targetIndex = *targetIndex + mid;
+				return true;
+			}
+		}
+		else
+		{
+			*targetIndex = mid; 
+			return true;
+		}
+		
+		return false;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int A[] = {1, 3, 5, 7, 7, 9, 9, 11, 0, 0, 0, 0, 0, 0};
@@ -129,6 +176,27 @@ int main(int argc, char *argv[])
 		}
 	}
 	printf("}\n");
+	
+	int binSearchInput[] = {15, 16, 19, 20, 25, 1, 3, 4, 5, 7, 10, 14};
+	size_t index = 0;
+	if(rotatedBinarySearch(5, _countof(binSearchInput), binSearchInput, &index))
+	{
+		printf("\nRotated binary search: %d is at index %zu (array[%zu] = %d).\n", 5, index, index, binSearchInput[index]); 
+	}
+	else
+	{
+		printf("\nRotated binary search failed!\n");
+	}
+
+	int binSearchInput2[] = {5, 7, 10, 14, 15, 16, 19, 20, 25, 1, 3, 4};
+	if(rotatedBinarySearch(5, _countof(binSearchInput), binSearchInput2, &index))
+	{
+		printf("\nRotated binary search 2: %d is at index %zu (array[%zu] = %d).\n", 5, index, index, binSearchInput2[index]); 
+	}
+	else
+	{
+		printf("\nRotated binary search 2 failed!\n");
+	}
 	
 	return 0;
 }
