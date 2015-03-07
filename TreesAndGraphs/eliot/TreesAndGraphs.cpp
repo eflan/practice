@@ -2,6 +2,10 @@
 #include <list>
 #include <vector>
 #include <map>
+#include <unordered_map>
+#include <queue>
+
+#define _countof(x) (sizeof(x) / (sizeof(x[0])))
 
 class BinaryTreeNode
 {
@@ -485,6 +489,148 @@ BinaryTreeNode *SortedArrayToBinarySearchTree(size_t count, unsigned int *array)
 	}
 }
 
+class Graph
+{
+public:
+	Graph() : _vertices() {}
+	
+	void addVertex(const char label, const size_t value)
+	{
+		_vertices[label] = Vertex(label, value);
+	}
+	
+	void connectFromTo(const char from, char to)
+	{
+		auto it = _vertices.find(from);
+		it->second.connectTo(to);
+	}
+	
+	const std::list<char> &adjacent(const char v) const
+	{
+		auto it = _vertices.find(v);
+		return it->second.adjacent();
+	}
+	
+	const size_t valueOf(const char v) const
+	{
+		auto it = _vertices.find(v);
+		return it->second.value();
+	}
+	
+private:
+	class Vertex
+	{
+	public:
+		Vertex(const char l = '\0', const size_t val = 0)
+			: _label(l),
+			  _value(val),
+			  _adjacent()
+		{
+		}
+		
+		const char label() const { return _label; }
+		
+		const size_t value() const { return _value; }
+		
+		const std::list<char> &adjacent() const
+		{
+			return _adjacent;
+		}
+		
+		void connectTo(const char to)
+		{
+			_adjacent.push_back(to);
+		}
+
+	private:
+		char _label;
+		size_t _value;
+		std::list<char> _adjacent;
+	};
+	
+	std::unordered_map<char, Vertex> _vertices;
+};
+
+std::list<char> dfs(const Graph &graph, const char vertex, const size_t value, std::unordered_map<char, bool> &visited, std::list<char> path)
+{
+	auto it = visited.find(vertex);
+	if(it != visited.end())
+	{
+		return std::list<char>();
+	}
+	else
+	{
+		if(graph.valueOf(vertex) == value)
+		{
+			path.push_back(vertex);
+			return path;
+		}
+		else
+		{
+			visited[vertex] = true;
+			for(const char adjacent : graph.adjacent(vertex))
+			{
+				std::list<char> curPath(path);
+				curPath.push_back(vertex);
+				
+				std::list<char> pathToTarget = dfs(graph, adjacent, value, visited, curPath);
+				if(!pathToTarget.empty())
+				{
+					return pathToTarget;
+				}
+			}
+			
+			return std::list<char>();
+		}
+	}
+}
+
+std::list<char> depthFirstFind(const Graph &graph, const char vertex, const size_t value, size_t *visitedCount)
+{
+	std::unordered_map<char, bool> visited;
+	std::list<char> path;
+	std::list<char> pathToTarget = dfs(graph, vertex, value, visited, path);
+	*visitedCount = visited.size();
+	return pathToTarget;
+}
+
+std::list<char> breadthFirstFind(const Graph &graph, const char vertex, const size_t value, size_t *visitedCount)
+{
+	std::unordered_map<char, bool> visited;
+	std::unordered_map<char, std::list<char> > paths;
+	std::queue<char> frontier;
+	frontier.push(vertex);
+	std::list<char> path;
+	path.push_back(vertex);
+	paths[vertex] = path;
+	
+	while(!frontier.empty())
+	{
+		char curVertex = frontier.front();
+		frontier.pop();
+		visited[curVertex] = true;
+		
+		if(graph.valueOf(curVertex) == value)
+		{
+			*visitedCount = visited.size();
+			return paths[curVertex];
+		}
+		else
+		{			
+			for(const char adjacent : graph.adjacent(curVertex))
+			{
+				std::list<char> pathTo(paths[curVertex]);
+				pathTo.push_back(adjacent);
+				paths[adjacent] = pathTo;
+				
+				frontier.push(adjacent);
+			}
+		}
+	}
+	
+	return std::list<char>();
+}
+
 int main(int argc, char *argv[])
 {
 	BinaryTreeNode *balanced1 = new BinaryTreeNode(0,
@@ -698,5 +844,56 @@ int main(int argc, char *argv[])
 	printf("Common ancestor of 5 and 2 is %u (Should be 3).\n",
 	       inorderTest->CommonAncestor(inorderTest->Left()->Right(),
 									   inorderTest->Left()->Left()->Left())->Value());
+	
+
+	/**
+	 *           a -> b -> n-> o -> p
+	 *           |             
+	 *           V
+	 *      f <- c -> d -> e ---|
+	 *      |    ^         ^    |
+	 *      V    |         |    V
+	 *      g -> h -> i -> l -> m
+	 *           |    |
+	 *           V    V
+	 *           j <- k
+	 **/
+	 
+	char vertices[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'};
+	char from[] = {'a', 'a', 'b', 'c', 'c', 'd', 'e', 'f', 'g', 'h', 'h', 'h', 'i', 'i', 'k', 'l', 'l', 'n', 'o'};
+	char to[]   = {'b', 'c', 'n', 'f', 'd', 'e', 'm', 'g', 'h', 'c', 'i', 'j', 'l', 'k', 'j', 'e', 'm', 'o', 'p'};
+	
+	Graph graph;
+	
+	for(size_t i = 0; i < _countof(vertices); i++)
+	{
+		graph.addVertex(vertices[i], i);
+	}
+	
+	for(size_t i = 0; i < _countof(from); i++)
+	{
+		graph.connectFromTo(from[i], to[i]);
+	}
+	
+	size_t dfsVisitedCount = 0;	
+	std::list<char> dfsPath = depthFirstFind(graph, 'a', 12, &dfsVisitedCount);
+		
+	printf("\nDFS path = (");
+	for(const char c : dfsPath)
+	{
+		printf("%c, ", c);
+	}
+	printf("), %c = %zu, complexity = %zu.\n", dfsPath.back(), graph.valueOf(dfsPath.back()), dfsVisitedCount);
+
+	size_t bfsVisitedCount = 0;
+	std::list<char> bfsPath = breadthFirstFind(graph, 'a', 12, &bfsVisitedCount);
+	
+	printf("BFS path = (");
+	for(const char c : bfsPath)
+	{
+		printf("%c, ", c);
+	}
+	printf("), %c = %zu, complexity = %zu.\n", bfsPath.back(), graph.valueOf(bfsPath.back()), bfsVisitedCount);
+	
 	return 0;
 }
