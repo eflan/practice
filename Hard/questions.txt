@@ -5,3 +5,4 @@
    EXAMPLE
    Input: 25
    Output: 9 from (2, 12, 20, 21, 22, 23, 24, 25)
+5. You have a large text file containing words. You are asked to calculate the minimum distance (measured in words) between two words in the file. If this operation is to be repeated many times how can you optimize your solution?

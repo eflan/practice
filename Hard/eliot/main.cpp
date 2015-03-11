@@ -4,6 +4,8 @@
 #include <string.h>
 #include <vector>
 
+void wordDistance();
+
 int add(int a, int b)
 {
 	int sum = 0;
@@ -235,5 +237,8 @@ int main(int argc, char *argv[])
 	{
 		printf("Count twos (brute force) 0...%zu = %zu\n", i, countTwosBruteForce(i));
 	}
+	
+	wordDistance();
+	
 	return 0;
 }

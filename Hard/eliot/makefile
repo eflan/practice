@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-Wall -std=c++11
 LFLAGS=-Wall -std=c++11
-SOURCES=main.cpp
+SOURCES=main.cpp wordDistance.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=Hard
 
