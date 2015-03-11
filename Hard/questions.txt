@@ -1,1 +1,3 @@
 1. Write a program to add two numbers without using + or any other arithmetic operators.
+2. Write a method to shuffle a deck of cards. It must be a perfect shuffle, with each of the 52! permutations equally likely. Assume you are given a perfect random number generator.
+3. Write a method to randomly generate a set of m integers from an array n. Each element must equal probability of being chosen.
