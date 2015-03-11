@@ -82,6 +82,98 @@ std::vector<int> choose(const size_t m, const std::vector<int> &numbers)
 	return subset;
 }
 
+const size_t twoDigits(size_t num)
+{
+	size_t twos = 0;
+	
+	while(num > 1)
+	{
+		if((num % 10) == 2)
+		{
+			twos++;
+		}
+		
+		num /= 10;
+	}
+	
+	return twos;
+}
+
+size_t countTwosBruteForce(const size_t n)
+{
+	size_t totalTwos = 0;
+	
+	for(size_t i = 0; i <= n; i++)
+	{
+		totalTwos += twoDigits(i);
+	}
+	
+	return totalTwos;
+}
+
+size_t countDigits(size_t n)
+{
+	size_t digits = 0;
+	
+	while(n > 0)
+	{
+		digits++;
+		n /= 10;
+	}
+	
+	return digits;
+}
+
+const size_t power(const size_t base, const size_t exponent)
+{
+	size_t pow = 1;
+	if(exponent == 0)
+	{
+		return 1;
+	}
+	else
+	{
+		for(size_t i = 0; i < exponent; i++)
+		{
+			pow *= base;
+		}
+		
+		return pow;
+	}
+}
+
+const size_t countTwosForDigit(const size_t n, const size_t digit)
+{
+	size_t place = power(10, digit);
+	
+	const size_t nDigit = (n / place) % 10;
+	
+	if(nDigit < 2)
+	{
+		return (n - (n % (place * 10))) / 10;
+	}
+	else if(nDigit > 2)
+	{
+		return ((n - (n % (place * 10))) + (place * 10)) / 10; 
+	}
+	else
+	{
+		return ((n - (n % (place * 10))) / 10) + (n % place) + 1;
+	}
+}
+
+const size_t countTwos(const size_t n)
+{
+	size_t twos = 0;
+	const size_t digitCount = countDigits(n);
+	for(size_t digit = 0; digit < digitCount; digit++)
+	{
+		twos += countTwosForDigit(n, digit);
+	}
+	
+	return twos;
+}
+
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
@@ -132,5 +224,16 @@ int main(int argc, char *argv[])
 	}
 	printf("}\n");
 	
+	printf("\n");
+	for(size_t i = 10; i < 100000000; i *= 10)
+	{
+		printf("Count twos 0...%zu = %zu\n", i, countTwos(i));
+	}
+	
+	printf("\n");
+	for(size_t i = 10; i < 100000000; i *= 10)
+	{
+		printf("Count twos (brute force) 0...%zu = %zu\n", i, countTwosBruteForce(i));
+	}
 	return 0;
 }
