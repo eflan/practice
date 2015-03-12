@@ -5,6 +5,7 @@
 #include <vector>
 
 void wordDistance();
+void longestWord();
 
 int add(int a, int b)
 {
@@ -164,6 +165,12 @@ const size_t countTwosForDigit(const size_t n, const size_t digit)
 	}
 }
 
+/**
+ * Describe an algorithm to find the smallest one million numbers in one billion numbers. Assume all one billion numbers can fit in computer memory.
+ * SOLUTION radix sort should work in linear time and then we can just take the first million numbers.
+ **/
+ 
+ 
 const size_t countTwos(const size_t n)
 {
 	size_t twos = 0;
@@ -239,6 +246,7 @@ int main(int argc, char *argv[])
 	}
 	
 	wordDistance();
+	longestWord();
 	
 	return 0;
 }

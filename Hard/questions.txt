@@ -6,3 +6,6 @@
    Input: 25
    Output: 9 from (2, 12, 20, 21, 22, 23, 24, 25)
 5. You have a large text file containing words. You are asked to calculate the minimum distance (measured in words) between two words in the file. If this operation is to be repeated many times how can you optimize your solution?
+6. Describe an algorithm to find the smallest one million numbers in one billion numbers. Assume all one billion numbers can fit in computer memory.
+7. Given a list of words w, find the longest word in w that can be created by combining two or more words from w.
+8. Given a string s and a set of smaller strings T, design an algorithm to find all occurences of each string in T in s. 
