@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <vector>
 #include <list>
+#include <string>
 
 template<typename K>
 class DefaultHash

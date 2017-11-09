@@ -504,14 +504,14 @@ int main(int argc, char *argv[])
 	
 	std::vector<uint64_t> path;
 	std::vector<std::vector<uint64_t> >solutions;
-	printf("\n\n%lu cobminations for %lu steps\n", countStepCombos(5UL, path, solutions), 5UL);
+	printf("\n\n%llu cobminations for %lu steps\n", countStepCombos(5UL, path, solutions), 5UL);
 	
 	for(std::vector<uint64_t> &path : solutions)
 	{
 		printf("(");
 		for(uint64_t step : path)
 		{
-			printf("%lu ", step);
+			printf("%llu ", step);
 		}
 		printf(")\n");
 	}
@@ -519,7 +519,7 @@ int main(int argc, char *argv[])
 	uint64_t hits = 0;
 	std::unordered_map<uint64_t, uint64_t> memoizer;
 	const uint64_t solutionCount = countStepCombosMemoized(100UL, hits, memoizer);
-	printf("\n\n%lu cobminations for %lu steps (%lu memoizer hits)\n", solutionCount, 100UL, hits);
+	printf("\n\n%llu cobminations for %lu steps (%llu memoizer hits)\n", solutionCount, 100UL, hits);
 	
 	OfflimitsMap offLimits(makeRobotMap(10, 10));
 	printf("\nRobot path = \n");
