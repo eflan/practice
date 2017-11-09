@@ -78,7 +78,7 @@ void PrintBinary(double d)
 {
 	// binary representation is like so --
 	// 0th bit = 1/2, 1st bit = 1/4, 2nd bit = 1/8, etc.
-	if(d >= 1.0d || d <= 0.0d)
+	if(d >= 1.0 || d <= 0.0)
 	{
 		printf("%lf in binary is ERROR\n", d);
 	}
@@ -90,16 +90,16 @@ void PrintBinary(double d)
 		
 		for(; i < 33; i++)
 		{
-			if(temp <= 0.0d)
+			if(temp <= 0.0)
 			{
 				break;
 			}
 
-			double bit = temp * 2.0d;
-			if(bit >= 1.0d)
+			double bit = temp * 2.0;
+			if(bit >= 1.0)
 			{
 				binary[i] = '1';
-				temp = bit - 1.0d;
+				temp = bit - 1.0;
 			}
 			else
 			{
@@ -108,7 +108,7 @@ void PrintBinary(double d)
 			}			
 		}
 		
-		if(temp > 0.0d)
+		if(temp > 0.0)
 		{
 			printf("%lf in binary is ERROR\n", d);
 		}
@@ -377,10 +377,10 @@ int main(int argc, char *argv[])
 	}
 	
 	printf("\n");
-	PrintBinary(0.72d);
-	PrintBinary(0.25d);
-	PrintBinary(0.125d);
-	PrintBinary(0.25d + 0.125d);
+	PrintBinary(0.72);
+	PrintBinary(0.25);
+	PrintBinary(0.125);
+	PrintBinary(0.25 + 0.125);
 	
 	printf("\n");
 	for(unsigned int n = 0; n < 10; n++)
