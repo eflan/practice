@@ -4,6 +4,54 @@
 #include <memory>
 
 /**
+ * Implement atoi(char *str)
+ */
+bool isDigit(char ch)
+{
+  if(ch < '0' || ch > '9')
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
+int atoi(char *str)
+{
+  const int ErrorValue = -1;
+
+  if(str == NULL || *str == '\0')
+  {
+    return ErrorValue;
+  }
+
+  int sign = 1;
+  if(*str == '-')
+  {
+    sign = -1;
+    str++;
+  }
+
+  int num = 0;
+
+  for(int i = 0; *str != '\0'; i++, str++)
+  {
+    num *= 10;
+
+    if(!isDigit(*str))
+    {
+      return ErrorValue;
+    }
+
+    num += *str - '0';
+  }
+
+  return num;
+}
+
+/**
  * 1. Implement an algorithm to determine if a string has all unique characters. What if you cannot use any additional data structures?
  */
  bool Simple_AllCharsUnique(char *str)
@@ -497,6 +545,25 @@ bool IsRotation(char const *s1, char const *s2)
 	return isRotation;
 }
 
+void inPlaceReverse(char *str)
+{
+  if(str == NULL)
+  {
+    return;
+  }
+
+  size_t length = strlen(str);
+  char temp = '\0';
+  size_t halfLength = length / 2;
+
+  for(int i = 0; i < halfLength; i++)
+  {
+    temp = str[i];
+    str[i] = str[(length - 1) - i];
+    str[(length - 1) - i] = temp;
+  }
+}
+
 int main(int argc, char *argv[])
 {
 	char str1[] = "abcabc";
@@ -686,6 +753,17 @@ int main(int argc, char *argv[])
 	printf("\nIsRotation(\"%s\", \"%s\") = %u\n", "waterbottle", "erbottlewat", IsRotation("waterbottle", "erbottlewat"));
 	printf("IsRotation(\"%s\", \"%s\") = %u\n", "waterbottle", "erbottlewat", IsRotation("waterbottle", "erbottlewate"));
 	printf("IsRotation(\"%s\", \"%s\") = %u\n", "waterbottle", "erbottlewat", IsRotation("waterbottle", "erbottelwat"));
-	
+
+        printf("atoi(\"foo\") == %d\n", atoi("foo"));
+        printf("atoi(\"-1234\") == %d\n", atoi("-1234"));
+        printf("atoi(\"567\") == %d\n", atoi("567"));
+        printf("atoi(\"0\") == %d\n", atoi("0"));
+        printf("atoi(\"-0\") == %d\n", atoi("-0"));	
+
+        char abcString[] = "abc123";
+        printf("abcString = %s\n", abcString);
+        inPlaceReverse(abcString);
+        printf("reverse(\"abc123\") = %s\n", abcString);
+
 	return 0;
 }
