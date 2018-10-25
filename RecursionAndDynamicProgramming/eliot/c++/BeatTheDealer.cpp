@@ -26,58 +26,70 @@
 struct PlayerRound
 {	
 	PlayerRound()
-		: hit(false),
-		  dealtCard(0),
-		  hitCard(0)
+		: _hit(false),
+		  _dealtCard(0),
+		  _hitCard(0)
 	{
 	}
 	
 	PlayerRound(unsigned int dc)
-		: hit(false),
-		  dealtCard(dc),
-		  hitCard(0)
+		: _hit(false),
+		  _dealtCard(dc),
+		  _hitCard(0)
 	{
 	}
 
 	void Hit(unsigned int h)
 	{
-		hit = true;
-		hitCard = h;
+		_hit = true;
+		_hitCard = h;
 	}
 	
 	void Print() const
 	{
-		if(hit)
+		if(_hit)
 		{
-			printf("%u hits %u = %u %% 10 = %u", dealtCard, hitCard, Hand(), HandValue()); 
+			printf("%u hits %u = %u %% 10 = %u", _dealtCard, _hitCard, Hand(), HandValue()); 
 		}
 		else
 		{
-			printf("%u stays %% 10 = %u", dealtCard, HandValue()); 
+			printf("%u stays %% 10 = %u", _dealtCard, HandValue()); 
 		}
 	}
 	
 	int Hand() const
 	{
-		return dealtCard + hitCard;
+		return _dealtCard + _hitCard;
 	}
 	
 	int HandValue() const
 	{
-		return (dealtCard + hitCard) % 10;
+		return (_dealtCard + _hitCard) % 10;
+	}
+
+	size_t cardCount() const
+	{
+		if(_hit)
+		{
+			return 2;
+		}
+		else 
+		{
+			return 1;
+		}
 	}
 	
 	PlayerRound &operator=(const PlayerRound &r)
 	{
-		dealtCard = r.dealtCard;
-		hit = r.hit;
-		hitCard = r.hitCard;
+		_dealtCard = r._dealtCard;
+		_hit = r._hit;
+		_hitCard = r._hitCard;
 		return *this;
 	}
 	
-	bool hit;
-	unsigned int dealtCard;
-	unsigned int hitCard;
+	bool _hit;
+	unsigned int _dealtCard;
+	unsigned int _hitCard;
 };
 
 class GameRound
@@ -95,18 +107,24 @@ public:
 		_dealer = dealer;
 	}
 	
-	void Print() const
+	void Print(int runningTotal) const
 	{
 		printf("Player ");
 		_player.Print();
 		printf("\nDealer ");
 		_dealer.Print();
-		printf("\nTotal %d.\n", Total());
+		int total = Total();
+		printf("\nRound Score %d. (Total Score: %d) \n", total, runningTotal + total);
 	}
 	
 	int Total() const
 	{
 		return Total(_player, _dealer);
+	}
+
+	size_t cardCount() const
+	{
+		return _player.cardCount() + _dealer.cardCount();
 	}
 	
 	GameRound &operator=(const GameRound &r)
@@ -176,7 +194,7 @@ private:
 	std::unordered_map<size_t, const std::list<GameRound> > _memoryMoves;
 };
 
-int Simulate(bool hit, const size_t deckSize, unsigned int *deck, size_t *pDeckAdjustment, GameRound &round)
+int Simulate(bool hit, const size_t deckSize, const unsigned int *deck, size_t *pDeckAdjustment, GameRound &round)
 {
 	PlayerRound player(deck[0]);
 	PlayerRound dealer(deck[1]);
@@ -201,7 +219,7 @@ int Simulate(bool hit, const size_t deckSize, unsigned int *deck, size_t *pDeckA
 	return round.Total();
 }
 
-int BestScore(Memoizer &memo, size_t deckSize, unsigned int *deck, std::list<GameRound> &game)
+int BestScore(Memoizer &memo, size_t deckSize, const unsigned int *deck, std::list<GameRound> &game)
 {
 	if(memo.HasTotal(deckSize))
 	{
@@ -247,18 +265,52 @@ int BestScore(Memoizer &memo, size_t deckSize, unsigned int *deck, std::list<Gam
 	}
 }
 
-void PlayBeatTheDealer()
+void randomDeck(unsigned int *cards, const unsigned int deckSize)
+{
+	srand(time(NULL));
+	for(unsigned int i = 0; i < deckSize; i++)
+	{
+		cards[i] = rand() % 10;
+	}
+}
+
+void printDeck(const unsigned int *cards, const unsigned int deckSize)
+{
+	printf("Deck [ ");
+	for(unsigned int i = 0; i < deckSize - 1; i++)
+	{
+		printf("%d, ", cards[i]);
+	}
+	printf("%d ]", cards[deckSize - 1]);
+}
+
+void PlayBeatTheDealer(const unsigned int deckSize)
 {
 	std::list<GameRound> game;
 	HashMemoizer memo;
-	unsigned int cards[] = {9, 5, 7, 3, 9, 2, 1, 8, 3, 2, 7, 1, 5, 6};
-	printf("\nBest score is %u.\n", BestScore(memo, _countof(cards), cards, game));
+	unsigned int *cards = new unsigned int[deckSize];
+
+	randomDeck(cards, deckSize);
+	int bestScore = BestScore(memo, deckSize, cards, game);
 	
+	size_t deckOffset = 0;
+	int runningTotal = 0;
 	unsigned int roundNum = 0;
 	for(const GameRound &r : game)
 	{
-		printf("\nRound #%u\n", roundNum);
-		r.Print();
+		printDeck(cards + deckOffset, deckSize - deckOffset);
+		printf("\n\nRound #%u\n", roundNum);
+		r.Print(runningTotal);
+		runningTotal += r.Total();
 		roundNum++;
+		deckOffset += r.cardCount();
 	}
+
+	printDeck(cards + deckOffset, deckSize - deckOffset);
+	printf("\nBest score is %d.\n", bestScore);
+}
+
+int main(int argc, char **argv)
+{
+	PlayBeatTheDealer(atoi(argv[1]));
 }
