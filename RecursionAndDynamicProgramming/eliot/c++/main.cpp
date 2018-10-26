@@ -7,7 +7,7 @@
 
 #define _countof(x) (sizeof(x) / sizeof(x[0]))
 
-void PlayBeatTheDealer();
+void PlayBeatTheDealer(const unsigned int deckSize);
 
 const uint64_t countStepCombos(const uint64_t steps, std::vector<uint64_t> &path, std::vector<std::vector<uint64_t> > &accum)
 {
@@ -500,7 +500,7 @@ int main(int argc, char *argv[])
 {
 	srand(time(NULL));
 	
-	PlayBeatTheDealer();
+	PlayBeatTheDealer(100);
 	
 	std::vector<uint64_t> path;
 	std::vector<std::vector<uint64_t> >solutions;

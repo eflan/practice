@@ -162,12 +162,22 @@ public:
 	virtual const int Total(const size_t deckSize) const = 0;
 	virtual const std::list<GameRound> &Moves(const size_t deckSize) const = 0;
 	virtual void Remember(const size_t deckSize, const int total, const std::list<GameRound> &moves) = 0;
-	virtual const bool HasTotal(const size_t deckSize) const = 0;
+	virtual const bool HasTotal(const size_t deckSize) = 0;
+	virtual unsigned long countHits() const = 0;
+	virtual unsigned long countMisses() const = 0;
 };
 
 class HashMemoizer : public Memoizer
 {
 public:
+    HashMemoizer() :
+	  _hits(0),
+	  _misses(0),
+	  _memoryScores(),
+	  _memoryMoves()
+	{
+	}
+
 	virtual const int Total(const size_t deckSize) const
 	{
 		return _memoryScores.at(deckSize);
@@ -184,12 +194,35 @@ public:
 		_memoryMoves.insert(std::make_pair(deckSize, moves));
 	}
 	
-	virtual const bool HasTotal(const size_t deckSize) const
+	virtual const bool HasTotal(const size_t deckSize)
 	{
-		return _memoryScores.find(deckSize) != _memoryScores.end();
+		const bool hit = _memoryScores.find(deckSize) != _memoryScores.end();
+
+		if(hit)
+		{
+			++_hits;
+		}
+		else
+		{
+			++_misses;
+		}
+
+		return hit;
+	}
+
+	virtual unsigned long countHits() const 
+	{
+		return _hits;
+	}
+
+	virtual unsigned long countMisses() const
+	{
+		return _misses;
 	}
 	
 private:
+    unsigned long _hits;
+	unsigned long _misses;
 	std::unordered_map<size_t, const int> _memoryScores;
 	std::unordered_map<size_t, const std::list<GameRound> > _memoryMoves;
 };
@@ -275,13 +308,21 @@ void randomDeck(unsigned int *cards, const unsigned int deckSize)
 }
 
 void printDeck(const unsigned int *cards, const unsigned int deckSize)
-{
+{	
 	printf("Deck [ ");
-	for(unsigned int i = 0; i < deckSize - 1; i++)
+	if(deckSize > 0)
 	{
-		printf("%d, ", cards[i]);
+		for(unsigned int i = 0; i < deckSize - 1; i++)
+		{
+			printf("%d, ", cards[i]);
+		}
+
+		printf("%d ]", cards[deckSize - 1]);
 	}
-	printf("%d ]", cards[deckSize - 1]);
+	else
+	{
+		printf(" ]");
+	}
 }
 
 void PlayBeatTheDealer(const unsigned int deckSize)
@@ -308,9 +349,12 @@ void PlayBeatTheDealer(const unsigned int deckSize)
 
 	printDeck(cards + deckOffset, deckSize - deckOffset);
 	printf("\nBest score is %d.\n", bestScore);
+	printf("Memoizer perf %lu hits, %lu misses\n", memo.countHits(), memo.countMisses());
 }
 
-int main(int argc, char **argv)
-{
-	PlayBeatTheDealer(atoi(argv[1]));
-}
+/**
+* int main(int argc, char **argv)
+* {
+* 	PlayBeatTheDealer(atoi(argv[1]));
+* }
+*/
